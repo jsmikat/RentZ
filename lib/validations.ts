@@ -36,6 +36,10 @@ export const SignInFormSchema = z.object({
 });
 
 export const CreateApartmentFormSchema = z.object({
+  name: z
+    .string()
+    .min(1, { message: "Apartment name is required" })
+    .max(12, { message: "Apartment name must be less than 12 characters" }),
   street: z.string().min(1, { message: "Street is required" }),
   city: z.string().min(1, { message: "City is required" }),
   district: z.string().min(1, { message: "District is required" }),

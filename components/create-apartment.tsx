@@ -25,6 +25,7 @@ function AddApartment() {
   const form = useForm({
     resolver: zodResolver(CreateApartmentFormSchema),
     defaultValues: {
+      name: "",
       street: "",
       city: "",
       district: "",
@@ -48,6 +49,19 @@ function AddApartment() {
         >
           <FormField
             control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="A12" type="" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
             name="street"
             render={({ field }) => (
               <FormItem>
@@ -55,7 +69,6 @@ function AddApartment() {
                 <FormControl>
                   <Input placeholder="A/230 Block" type="" {...field} />
                 </FormControl>
-
                 <FormMessage />
               </FormItem>
             )}

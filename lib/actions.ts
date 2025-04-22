@@ -134,12 +134,21 @@ export async function CreateApartment(params: ApartmentParams) {
     throw new Error("Unauthorized Access Request");
   }
 
-  const { street, city, district, division, rentalPrice, size, description } =
-    parsedData.data;
+  const {
+    name,
+    street,
+    city,
+    district,
+    division,
+    rentalPrice,
+    size,
+    description,
+  } = parsedData.data;
 
   try {
     dbConnect();
     const newApartment = await Apartment.create({
+      name,
       owner: session?.user.id,
       address: {
         street,
@@ -179,3 +188,25 @@ export async function GetOwnedApartments(userId: string) {
     };
   }
 }
+
+export async function GetAvailableApartments() {
+  dbConnect();
+  try {
+    const apartments = await Apartment.find({ allocatedTo: null });
+    return {
+      success: true,
+      data: { apartments: JSON.parse(JSON.stringify(apartments)) },
+    };
+  } catch (error) {
+    console.error("Error fetching available apartments:", error);
+    return {
+      success: false,
+    };
+  }
+}
+
+export async function SendRequest(params: {
+  apartmentId: string;
+  tenancyType: string;
+  message: string;
+}) {}

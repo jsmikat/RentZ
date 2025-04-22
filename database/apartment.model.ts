@@ -6,6 +6,7 @@ export interface IApartment {
     userId: Types.ObjectId;
     allocatedAt: Date;
   } | null;
+  name: string;
   address: {
     street: string;
     city: string;
@@ -29,6 +30,7 @@ const ApartmentSchema = new Schema<IApartment>(
       },
       default: null,
     },
+    name: { type: String, required: true },
     address: {
       street: { type: String, required: true },
       city: { type: String, required: true },

@@ -1,12 +1,9 @@
-"use client";
+import { auth } from "@/auth";
+import { ApartmentsTable } from "@/components/apartment-table";
+import { GetOwnedApartments } from "@/lib/actions";
 
-import { useSession } from "next-auth/react";
-
-import AddApartment from "@/components/CreateApartment";
-
-function page() {
-  const { data: session } = useSession();
-
+async function page() {
+  const session = await auth();
   if (!session) {
     return <div>Please login to add an apartment</div>;
   }
@@ -22,12 +19,14 @@ function page() {
     );
   }
 
-  return (
-    <>
-      <h1 className="text-6xl font-black">The page rendered</h1>
-      <AddApartment />
-    </>
-  );
+  const { data } = await GetOwnedApartments(session.user.id);
+  console.log("data", data);
+
+  if (!data) {
+    return <div>No apartments found</div>;
+  }
+
+  return <ApartmentsTable apartments={data.apartments} />;
 }
 
 export default page;
