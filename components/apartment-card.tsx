@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+
+import { useSession } from "next-auth/react";
 
 import { SendRequest } from "@/lib/actions";
 import { ApartmentObject } from "@/types/MongodbObjectTypes";
@@ -53,15 +56,47 @@ export default function ApartmentTableWithDialog({ apartments }: Props) {
 }
 
 function ApartmentRequestRow({ apt }: { apt: ApartmentObject }) {
+  const { data: session } = useSession();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const modalId = searchParams.get("modalId");
+  console.log("Pathname:", pathname);
+
   const [tenancyType, setTenancyType] = useState<"bachelor" | "family">(
     "bachelor"
   );
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Restore form state on return after signin
+  useEffect(() => {
+    if (session && modalId === apt._id && typeof window !== "undefined") {
+      const saved = window.sessionStorage.getItem(`req-${apt._id}`);
+      if (saved) {
+        const { tenancyType, message } = JSON.parse(saved);
+        setTenancyType(tenancyType);
+        setMessage(message);
+        window.sessionStorage.removeItem(`req-${apt._id}`);
+      }
+    }
+  }, [session, modalId, apt._id]);
+
+  // Determine if dialog is open
+  const open = modalId === apt._id;
+
   return (
-    <Dialog>
-      <DialogTrigger onClick={} asChild className="cursor-pointer">
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (isOpen) {
+          router.push(`${pathname}?modalId=${apt._id}`, { scroll: false });
+        } else {
+          router.push(pathname, { scroll: false });
+        }
+      }}
+    >
+      <DialogTrigger asChild className="cursor-pointer">
         <TableRow>
           <TableCell>
             {apt.address.street}, {apt.address.city}
@@ -77,6 +112,7 @@ function ApartmentRequestRow({ apt }: { apt: ApartmentObject }) {
           <TableCell className="text-right">{apt.size}</TableCell>
         </TableRow>
       </DialogTrigger>
+
       <DialogContent className="w-[90vw] sm:w-[420px] md:w-full rounded-lg">
         <DialogHeader>
           <DialogTitle>Apartment Details</DialogTitle>
@@ -107,13 +143,20 @@ function ApartmentRequestRow({ apt }: { apt: ApartmentObject }) {
         <form
           onSubmit={async (e) => {
             e.preventDefault();
+            // If not signed in, save state and redirect to sign in
+            if (!session && typeof window !== "undefined") {
+              window.sessionStorage.setItem(
+                `req-${apt._id}`,
+                JSON.stringify({ tenancyType, message })
+              );
+              router.push(`/signin?callbackUrl=${pathname}?modalId=${apt._id}`);
+              return;
+            }
             setIsSubmitting(true);
-            await SendRequest({
-              apartmentId: apt._id,
-              tenancyType,
-              message,
-            });
+            await SendRequest({ apartmentId: apt._id, tenancyType, message });
             setIsSubmitting(false);
+            // close modal after success
+            router.push(pathname, { scroll: false });
           }}
           className="space-y-4 pt-4"
         >

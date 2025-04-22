@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -16,6 +16,8 @@ import { SignInFormSchema } from "@/lib/validations";
 
 export function LoginForm({ className }: { className?: string }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
   const form = useForm<z.infer<typeof SignInFormSchema>>({
     resolver: zodResolver(SignInFormSchema),
     defaultValues: {
@@ -26,7 +28,7 @@ export function LoginForm({ className }: { className?: string }) {
 
   async function onSubmit(values: z.infer<typeof SignInFormSchema>) {
     await SignIn(values);
-    router.push("/");
+    router.push(callbackUrl, { scroll: false });
   }
   return (
     <form
