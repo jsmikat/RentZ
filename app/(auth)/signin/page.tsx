@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { Building2 } from "lucide-react";
+import { AlignVerticalJustifyEnd } from "lucide-react";
 
 import { LoginForm } from "@/components/login-form";
 
@@ -12,10 +12,10 @@ export default function LoginPage() {
         <div className="flex justify-center gap-2 md:justify-start">
           <Link
             href="/"
-            className="flex items-center gap-2 font-black text-4xl"
+            className="flex items-center font-black text-3xl"
           >
             <div className="text-black flex size-12 items-center justify-center">
-              <Building2 className="size-12" />
+              <AlignVerticalJustifyEnd className="size-8" />
             </div>
             RentZ
           </Link>

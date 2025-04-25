@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -27,7 +28,17 @@ export function LoginForm({ className }: { className?: string }) {
   });
 
   async function onSubmit(values: z.infer<typeof SignInFormSchema>) {
-    await SignIn(values);
+    const signedIn = await SignIn(values);
+    if (signedIn.success === false) {
+      // form.setError("password", {
+      //   type: "manual",
+      //   message: "Password is incorrect",
+      // });
+
+      toast.error(signedIn.error);
+      return;
+    }
+
     router.push(callbackUrl, { scroll: false });
   }
   return (

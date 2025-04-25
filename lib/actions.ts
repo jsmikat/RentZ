@@ -13,6 +13,7 @@ import {
   SignupFormSchema,
 } from "@/lib/validations";
 
+import { NotFoundError, UnauthorizedError } from "./http-errors";
 import dbConnect from "./mongoose";
 
 type SignUpParams = z.infer<typeof SignupFormSchema>;
@@ -88,7 +89,7 @@ export async function SignIn(params: SignInParama) {
   try {
     const existingUser = await User.findOne({ email });
     if (!existingUser) {
-      throw new Error("User does not exist");
+      throw new NotFoundError("User");
     }
 
     const isPasswordValid = await bcrypt.compare(
@@ -96,7 +97,7 @@ export async function SignIn(params: SignInParama) {
       existingUser.password
     );
     if (!isPasswordValid) {
-      throw new Error("Invalid password");
+      throw new UnauthorizedError("Invalid password");
     }
 
     await signIn("credentials", {
@@ -105,15 +106,29 @@ export async function SignIn(params: SignInParama) {
       role: existingUser.role,
       redirect: false,
     });
+
     return {
       success: true,
     };
-  } catch (error) {
-    console.error("Error during sign in:", error);
-    return {
-      success: false,
-      error: "Sign in failed",
-    };
+  } catch (error: Error | any) {
+    switch (error.name) {
+      case "NotFoundError":
+        return {
+          success: false,
+          error: "User not found",
+        };
+      case "UnauthorizedError":
+        return {
+          success: false,
+          error: "Invalid password",
+        };
+      default:
+        console.error("Error during sign in:", error);
+        return {
+          success: false,
+          error: "Sign in failed",
+        };
+    }
   }
 }
 
@@ -209,4 +224,6 @@ export async function SendRequest(params: {
   apartmentId: string;
   tenancyType: string;
   message: string;
-}) {}
+}) {
+  return;
+}

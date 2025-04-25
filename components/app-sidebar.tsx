@@ -1,5 +1,7 @@
 import * as React from "react";
 
+import { AlignVerticalJustifyEnd } from "lucide-react";
+
 import SignOut from "@/components/signOut";
 import {
   Sidebar,
@@ -16,20 +18,15 @@ import {
 
 // This is sample data.
 const data = {
-  versions: ["1.0.1", "1.1.0-alpha", "2.0.0-beta1"],
   navMain: [
     {
       title: "Navigation",
       url: "#",
       items: [
         {
-          title: "Dashboard",
-          url: "/owner/dashboard",
-        },
-        {
           title: "Add Apartment",
-          url: "/owner/dashboard/create",
-          isActive: true,
+          url: "/dashboard/owner/apartment/create",
+          // isActive: true,
         },
       ],
     },
@@ -39,8 +36,9 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar {...props}>
-      <SidebarHeader>
-        <h1 className="font-black text-6xl">RentZ</h1>
+      <SidebarHeader className="flex flex-row">
+        <AlignVerticalJustifyEnd className="size-8" />
+        <h1 className="font-black text-3xl">RentZ</h1>
       </SidebarHeader>
       <SidebarContent>
         {/* We create a SidebarGroup for each parent. */}

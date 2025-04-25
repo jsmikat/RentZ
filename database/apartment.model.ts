@@ -6,12 +6,12 @@ export interface IApartment {
     userId: Types.ObjectId;
     allocatedAt: Date;
   } | null;
-  name: string;
+
   address: {
     street: string;
+    area: string;
     city: string;
     district: string;
-    division: string;
   };
   rentalPrice: number;
   size: number;

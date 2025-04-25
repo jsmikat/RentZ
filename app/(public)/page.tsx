@@ -1,87 +1,64 @@
-"use client";
-
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 
-import { ArrowRight, Castle, Rocket } from "lucide-react";
-import { signOut, useSession } from "next-auth/react";
+import { AlignVerticalJustifyEnd, ArrowRight } from "lucide-react";
 
+import { auth } from "@/auth";
 import ApartmentGrid from "@/components/apartment-card";
 import { SearchForm } from "@/components/search-form";
+import SignoutButton from "@/components/signoutButton";
 import { Button } from "@/components/ui/button";
 import { GetAvailableApartments } from "@/lib/actions";
 import { ApartmentObject } from "@/types/MongodbObjectTypes";
 
-export default function HeroSection() {
-  const [apartments, setApartments] = useState<ApartmentObject[]>([]);
-  const { data: session } = useSession();
-  const router = useRouter();
+export default async function HeroSection() {
+  const session = await auth();
 
-  useEffect(() => {
-    const fetchApartments = async () => {
-      try {
-        const data = await GetAvailableApartments();
-        setApartments(data.data?.apartments || []);
-      } catch (error) {
-        console.error("Failed to fetch apartments:", error);
-      }
-    };
-
-    fetchApartments();
-  }, []);
+  const data = await GetAvailableApartments();
+  const apartments: ApartmentObject[] = data.data?.apartments || [];
   return (
     <>
       <header>
-        <nav className="fixed z-20 w-full border-b border-dashed bg-white backdrop-blur md:relative dark:bg-zinc-950/50 lg:dark:bg-transparent">
-          <div className="flex m-auto max-w-5xl px-6">
-            <div className="w-full flex items-center justify-between gap-6 py-3 lg:py-4">
-              <Link
-                href="/"
-                aria-label="home"
-                className="flex items-center space-x-2"
-              >
-                <div className="flex gap-2 items-center justify-center">
-                  <Castle className="size-8" />
-                  <p className="text-3xl font-black">RentZ</p>
-                </div>
-              </Link>
-              {session ? (
-                session.user.role === "owner" ? (
-                  <div className="flex w-full gap-3 md:w-fit lg:border-l lg:pl-6">
-                    <Button
-                      onClick={async () => {
-                        await signOut();
-                        router.refresh();
-                      }}
-                      variant="outline"
-                    >
-                      Logout
-                    </Button>
-                    <Button asChild>
-                      <Link href="/owner/dashboard">
-                        <span>Dashboard</span>
-                      </Link>
-                    </Button>
-                  </div>
-                ) : (
-                  <p>Normal User</p>
-                )
-              ) : (
-                <div className="flex w-full gap-3 md:w-fit lg:border-l lg:pl-6">
-                  <Button asChild variant="outline">
-                    <Link href="/signin">
-                      <span>Login</span>
-                    </Link>
-                  </Button>
-                  <Button asChild>
-                    <Link href="/signup">
-                      <span>Sign up</span>
-                    </Link>
-                  </Button>
-                </div>
-              )}
-            </div>
+        <nav className="fixed z-20 w-full border-b border bg-white backdrop-blur md:relative dark:bg-zinc-950/50 lg:dark:bg-transparent">
+          <div className="flex max-w-5xl px-6 justify-between m-auto items-center gap-6 py-3 lg:py-4">
+            <Link
+              href="/"
+              aria-label="home"
+              className="flex items-center space-x-2"
+            >
+              <div className="flex gap-2 items-center justify-center">
+                <AlignVerticalJustifyEnd className="size-8" />
+                <p className="text-3xl font-black">RentZ</p>
+              </div>
+            </Link>
+            {session ? (
+              <div className="flex gap-3 lg:border-l lg:pl-6">
+                <SignoutButton />
+                <Button asChild>
+                  <Link
+                    href={
+                      session.user.role === "owner"
+                        ? "/dashboard/owner"
+                        : "/dashboard/user"
+                    }
+                  >
+                    Dashboard
+                  </Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="flex gap-3 lg:border-l lg:pl-6">
+                <Button asChild variant="outline">
+                  <Link href="/signin">
+                    <span>Login</span>
+                  </Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/signup">
+                    <span>Sign up</span>
+                  </Link>
+                </Button>
+              </div>
+            )}
           </div>
         </nav>
       </header>
@@ -91,7 +68,7 @@ export default function HeroSection() {
             <div className="mx-auto space-y-6 max-w-7xl px-6 md:px-12">
               <div className="text-center sm:mx-auto sm:w-10/12 lg:mr-auto lg:mt-0 lg:w-4/5">
                 <Link
-                  href="#apratments"
+                  href="#apartments"
                   className="rounded-(--radius) mx-auto flex w-fit items-center gap-2 border p-1 pr-3"
                 >
                   <span className="bg-muted rounded-[calc(var(--radius)-0.25rem)] px-2 py-1 text-xs">
@@ -116,7 +93,7 @@ export default function HeroSection() {
                   affordable.
                 </p>
 
-                {!session && (
+                {/* {!session && (
                   <div className="mt-8">
                     <Button size="lg" asChild>
                       <Link href="/signin">
@@ -125,13 +102,13 @@ export default function HeroSection() {
                       </Link>
                     </Button>
                   </div>
-                )}
+                )} */}
               </div>
-              <SearchForm className="max-w-1/2 mx-auto" />
+              <SearchForm />
             </div>
           </div>
         </section>
-        <section id="apratments">
+        <section id="apartments">
           <ApartmentGrid apartments={apartments} />
         </section>
       </main>

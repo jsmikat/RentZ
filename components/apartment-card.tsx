@@ -72,12 +72,12 @@ function ApartmentRequestRow({ apt }: { apt: ApartmentObject }) {
   // Restore form state on return after signin
   useEffect(() => {
     if (session && modalId === apt._id && typeof window !== "undefined") {
-      const saved = window.sessionStorage.getItem(`req-${apt._id}`);
+      const saved = window.sessionStorage.getItem(`Req-${apt._id}`);
       if (saved) {
         const { tenancyType, message } = JSON.parse(saved);
         setTenancyType(tenancyType);
         setMessage(message);
-        window.sessionStorage.removeItem(`req-${apt._id}`);
+        window.sessionStorage.removeItem(`Req-${apt._id}`);
       }
     }
   }, [session, modalId, apt._id]);
@@ -146,9 +146,10 @@ function ApartmentRequestRow({ apt }: { apt: ApartmentObject }) {
             // If not signed in, save state and redirect to sign in
             if (!session && typeof window !== "undefined") {
               window.sessionStorage.setItem(
-                `req-${apt._id}`,
+                `Req-${apt._id}`,
                 JSON.stringify({ tenancyType, message })
               );
+
               router.push(`/signin?callbackUrl=${pathname}?modalId=${apt._id}`);
               return;
             }
