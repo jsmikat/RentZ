@@ -142,38 +142,48 @@ export async function CreateApartment(params: ApartmentParams) {
   }
 
   if (!session) {
-    throw new Error("Unauthenticated User");
+    throw new UnauthorizedError("Unauthenticated User");
   }
 
   if (session?.user.role !== "owner") {
-    throw new Error("Unauthorized Access Request");
+    throw new UnauthorizedError("Unauthorized Access Request");
   }
 
   const {
-    name,
     street,
     city,
-    district,
-    division,
     rentalPrice,
     size,
+    totalRooms,
+    bedrooms,
+    bathrooms,
+    hasParking,
+    hasElevator,
+    area,
+    totalFloors,
+    floor,
     description,
   } = parsedData.data;
 
   try {
     dbConnect();
-    const newApartment = await Apartment.create({
-      name,
+    await Apartment.create({
       owner: session?.user.id,
       address: {
         street,
         city,
-        district,
-        division,
+        area,
       },
       rentalPrice,
       size,
       description,
+      totalRooms,
+      bedrooms,
+      bathrooms,
+      hasParking,
+      hasElevator,
+      totalFloors,
+      floor,
     });
 
     return {
@@ -183,7 +193,6 @@ export async function CreateApartment(params: ApartmentParams) {
     console.error("Error during database connection:", error);
     return {
       success: false,
-      error: "Database connection failed",
     };
   }
 }

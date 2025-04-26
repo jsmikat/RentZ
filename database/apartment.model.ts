@@ -11,11 +11,18 @@ export interface IApartment {
     street: string;
     area: string;
     city: string;
-    district: string;
   };
+
   rentalPrice: number;
   size: number;
   description: string;
+  totalRooms: number;
+  bedrooms: number;
+  bathrooms: number;
+  hasParking?: boolean;
+  hasElevator?: boolean;
+  totalFloors: number;
+  floor: number;
 }
 
 export interface IApartmentDocument extends IApartment, Document {}
@@ -30,16 +37,21 @@ const ApartmentSchema = new Schema<IApartment>(
       },
       default: null,
     },
-    name: { type: String, required: true },
     address: {
       street: { type: String, required: true },
+      area: { type: String, required: true },
       city: { type: String, required: true },
-      district: { type: String, required: true },
-      division: { type: String, required: true },
     },
     rentalPrice: { type: Number, required: true },
     size: { type: Number, required: true },
+    hasParking: { type: Boolean, default: false },
+    hasElevator: { type: Boolean, default: false },
     description: { type: String, required: true },
+    totalRooms: { type: Number, required: true },
+    bedrooms: { type: Number, required: true },
+    bathrooms: { type: Number, required: true },
+    totalFloors: { type: Number, required: true },
+    floor: { type: Number, required: true },
   },
   {
     timestamps: true,

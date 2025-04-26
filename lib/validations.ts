@@ -36,18 +36,24 @@ export const SignInFormSchema = z.object({
 });
 
 export const CreateApartmentFormSchema = z.object({
-  name: z
-    .string()
-    .min(1, { message: "Apartment name is required" })
-    .max(12, { message: "Apartment name must be less than 12 characters" }),
+  totalRooms: z.number().min(1, { message: "Total rooms is required" }),
+  bedrooms: z
+    .number()
+    .min(1, { message: "Number of bedrooms is required" })
+    .max(10),
+  bathrooms: z
+    .number()
+    .min(1, { message: "Number of bathrooms is required" })
+    .max(10),
+  hasParking: z.boolean().optional(),
+  hasElevator: z.boolean().optional(),
   street: z.string().min(1, { message: "Street is required" }),
   city: z.string().min(1, { message: "City is required" }),
-  district: z.string().min(1, { message: "District is required" }),
-  division: z.string().min(1, { message: "Division is required" }),
+
+  area: z.string().min(1, { message: "Area is required" }),
   rentalPrice: z.number().min(1, { message: "Rental price is required" }),
   size: z.number().min(1, { message: "Size is required" }),
-  description: z
-    .string()
-    .min(1, { message: "Description is required" })
-    .max(500, { message: "Description must be less than 500 characters" }),
+  description: z.string().min(1, { message: "Description is required" }),
+  totalFloors: z.number().min(1, { message: "Total floors is required" }),
+  floor: z.number().min(1, { message: "Floor is required" }),
 });

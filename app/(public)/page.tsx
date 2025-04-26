@@ -3,7 +3,7 @@ import Link from "next/link";
 import { AlignVerticalJustifyEnd, ArrowRight } from "lucide-react";
 
 import { auth } from "@/auth";
-import ApartmentGrid from "@/components/apartment-card";
+import ApartmentCardExpandable from "@/components/apartment-card";
 import { SearchForm } from "@/components/search-form";
 import SignoutButton from "@/components/signoutButton";
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,9 @@ import { ApartmentObject } from "@/types/MongodbObjectTypes";
 export default async function HeroSection() {
   const session = await auth();
 
-  const data = await GetAvailableApartments();
-  const apartments: ApartmentObject[] = data.data?.apartments || [];
+  const fetchedData = await GetAvailableApartments();
+
+  const apartments: ApartmentObject[] = fetchedData.data?.apartments || [];
   return (
     <>
       <header>
@@ -62,6 +63,8 @@ export default async function HeroSection() {
           </div>
         </nav>
       </header>
+
+      {/* Main Section */}
       <main className="overflow-hidden">
         <section className="relative">
           <div className="relative py-24 lg:py-28">
@@ -92,24 +95,20 @@ export default async function HeroSection() {
                   Discover rental apartments, homes, and rooms—fast, easy,
                   affordable.
                 </p>
-
-                {/* {!session && (
-                  <div className="mt-8">
-                    <Button size="lg" asChild>
-                      <Link href="/signin">
-                        <Rocket className="relative size-4" />
-                        <span className="text-nowrap">Join Today</span>
-                      </Link>
-                    </Button>
-                  </div>
-                )} */}
               </div>
               <SearchForm />
             </div>
           </div>
         </section>
-        <section id="apartments">
-          <ApartmentGrid apartments={apartments} />
+        <section id="apartments" className="flex items-center justify-center">
+          <div className="flex flex-col max-w-5xl px-6 gap-8">
+            {apartments.map((apartment) => (
+              <ApartmentCardExpandable
+                key={apartment._id}
+                apartment={apartment}
+              />
+            ))}
+          </div>
         </section>
       </main>
     </>

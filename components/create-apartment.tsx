@@ -18,28 +18,78 @@ import {
   FormMessage,
 } from "./ui/form";
 import { Input } from "./ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import { Switch } from "./ui/switch";
 import { Textarea } from "./ui/textarea";
 
 type CreateApartmentFormTypes = z.infer<typeof CreateApartmentFormSchema>;
+
+const numberOptions = [
+  { value: 1, label: "1" },
+  { value: 2, label: "2" },
+  { value: 3, label: "3" },
+  { value: 4, label: "4" },
+  { value: 5, label: "5" },
+  { value: 6, label: "6" },
+  { value: 7, label: "7" },
+  { value: 8, label: "8" },
+];
+const numberOptionsFloor = [
+  { value: 1, label: "1" },
+  { value: 2, label: "2" },
+  { value: 3, label: "3" },
+  { value: 4, label: "4" },
+  { value: 5, label: "5" },
+  { value: 6, label: "6" },
+  { value: 7, label: "7" },
+  { value: 8, label: "8" },
+  { value: 9, label: "9" },
+  { value: 10, label: "10" },
+  { value: 11, label: "11" },
+  { value: 12, label: "12" },
+  { value: 13, label: "13" },
+  { value: 14, label: "14" },
+  { value: 15, label: "15" },
+  { value: 16, label: "16" },
+  { value: 17, label: "17" },
+  { value: 18, label: "18" },
+  { value: 19, label: "19" },
+  { value: 20, label: "20" },
+];
 
 function AddApartment() {
   const form = useForm({
     resolver: zodResolver(CreateApartmentFormSchema),
     defaultValues: {
-      name: "",
       street: "",
+      area: "",
       city: "",
-      district: "",
-      division: "",
+      totalRooms: 1,
+      bathrooms: 1,
+      bedrooms: 1,
+      hasParking: false,
+      hasElevator: false,
+      description: "",
       rentalPrice: 0,
       size: 0,
-      description: "",
+      totalFloors: 1,
+      floor: 1,
     },
   });
 
   async function onSubmit(values: CreateApartmentFormTypes) {
-    await CreateApartment(values);
+    const data = await CreateApartment(values);
     form.reset();
+    if (!data.success) {
+      toast.error("Error creating apartment");
+      return;
+    }
     toast.success("Apartment created successfully!");
   }
 
@@ -50,34 +100,37 @@ function AddApartment() {
           onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-8 max-w-3xl mx-auto py-10"
         >
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="A12" type="" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="street"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Street</FormLabel>
-                <FormControl>
-                  <Input placeholder="A/230 Block" type="" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
           <div className="grid grid-cols-12 gap-4">
+            <div className="col-span-4">
+              <FormField
+                control={form.control}
+                name="street"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Street</FormLabel>
+                    <FormControl>
+                      <Input placeholder="A/230 Block" type="" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="col-span-4">
+              <FormField
+                control={form.control}
+                name="area"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Area</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Area name" type="text" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <div className="col-span-4">
               <FormField
                 control={form.control}
@@ -86,39 +139,7 @@ function AddApartment() {
                   <FormItem>
                     <FormLabel>City</FormLabel>
                     <FormControl>
-                      <Input placeholder="city" type="text" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="col-span-4">
-              <FormField
-                control={form.control}
-                name="district"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>District</FormLabel>
-                    <FormControl>
-                      <Input placeholder="District" type="text" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="col-span-4">
-              <FormField
-                control={form.control}
-                name="division"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Divition</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Division" type="text" {...field} />
+                      <Input placeholder="city name" type="text" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -126,57 +147,6 @@ function AddApartment() {
               />
             </div>
           </div>
-
-          <div className="grid grid-cols-12 gap-4">
-            <div className="col-span-6">
-              <FormField
-                control={form.control}
-                name="rentalPrice"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Rental Price</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="$1000"
-                        type="number"
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(parseFloat(e.target.value))
-                        }
-                      />
-                    </FormControl>
-
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="col-span-6">
-              <FormField
-                control={form.control}
-                name="size"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Size</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="2400"
-                        type="number"
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(parseFloat(e.target.value))
-                        }
-                      />
-                    </FormControl>
-
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-
           <FormField
             control={form.control}
             name="description"
@@ -195,6 +165,242 @@ function AddApartment() {
               </FormItem>
             )}
           />
+
+          <div className="flex flex-wrap gap-6">
+            <FormField
+              control={form.control}
+              name="totalRooms"
+              render={({ field }) => (
+                <FormItem className="flex items-baseline">
+                  <FormLabel>Total rooms</FormLabel>
+
+                  <Select
+                    onValueChange={(value) => field.onChange(parseFloat(value))}
+                    defaultValue={field.value.toString()}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a number" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {numberOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.label}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="bedrooms"
+              render={({ field }) => (
+                <FormItem className="flex items-baseline">
+                  <FormLabel>Bedrooms</FormLabel>
+
+                  <Select
+                    onValueChange={(value) => field.onChange(parseFloat(value))}
+                    defaultValue={field.value.toString()}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a number" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {numberOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.label}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="bathrooms"
+              render={({ field }) => (
+                <FormItem className="flex items-baseline">
+                  <FormLabel>Bathrooms</FormLabel>
+                  <Select
+                    onValueChange={(value) => field.onChange(parseFloat(value))}
+                    defaultValue={field.value.toString()}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a number" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {numberOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.label}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormControl></FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="totalFloors"
+              render={({ field }) => (
+                <FormItem className="flex items-baseline">
+                  <FormLabel>Total floors</FormLabel>
+
+                  <Select
+                    onValueChange={(value) => field.onChange(parseFloat(value))}
+                    defaultValue={field.value.toString()}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a number" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {numberOptionsFloor.map((option) => (
+                        <SelectItem key={option.value} value={option.label}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="floor"
+              render={({ field }) => (
+                <FormItem className="flex items-baseline">
+                  <FormLabel>This floor</FormLabel>
+
+                  <Select
+                    onValueChange={(value) => field.onChange(parseFloat(value))}
+                    defaultValue={field.value.toString()}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a number" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {numberOptionsFloor.map((option) => (
+                        <SelectItem key={option.value} value={option.label}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="flex gap-4">
+            <div className="border-2 p-4">
+              <FormField
+                control={form.control}
+                name="hasElevator"
+                render={({ field }) => (
+                  <FormItem className="flex items-center space-x-2">
+                    <FormLabel className="mr-2">Has Elevator</FormLabel>
+                    <FormControl>
+                      <Switch
+                        id="has-elevator"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="border-2 p-4">
+              <FormField
+                control={form.control}
+                name="hasParking"
+                render={({ field }) => (
+                  <FormItem className="flex items-center space-x-2">
+                    <FormLabel className="mr-2">Has Parking</FormLabel>
+                    <FormControl>
+                      <Switch
+                        id="has-parking"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-12 gap-4">
+            <div className="col-span-6">
+              <FormField
+                control={form.control}
+                name="size"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Size</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="2400"
+                        min={0}
+                        type="number"
+                        {...field}
+                        onChange={(e) =>
+                          field.onChange(parseFloat(e.target.value))
+                        }
+                      />
+                    </FormControl>
+
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="col-span-6">
+              <FormField
+                control={form.control}
+                name="rentalPrice"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Rental Price</FormLabel>
+                    <FormControl>
+                      <Input
+                        min={0}
+                        placeholder="$1000"
+                        type="number"
+                        {...field}
+                        onChange={(e) =>
+                          field.onChange(parseFloat(e.target.value))
+                        }
+                      />
+                    </FormControl>
+
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
           <Button type="submit">Submit</Button>
         </form>
       </Form>
