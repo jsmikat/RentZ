@@ -123,7 +123,6 @@ export default function ApartmentCardExpandable({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const modalId = searchParams.get("modalId");
-  console.log("Pathname:", pathname);
 
   const [tenancyType, setTenancyType] = useState<"bachelor" | "family">(
     "bachelor"

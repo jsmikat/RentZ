@@ -52,16 +52,14 @@ export default function RegisterForm() {
   });
 
   async function onSubmit(values: z.infer<typeof SignupFormSchema>) {
-    console.log("Form submitted:", values);
     const submitted = await SignUp(values);
     if (submitted.success) {
-      console.log("User registered successfully");
       router.push("/");
     }
   }
 
   return (
-    <div className="flex min-h-[60vh] h-full w-full items-center justify-center py-8">
+    <div className="flex min-h-screen overflow-y-auto size-full items-center justify-center py-16">
       <Card className="mx-auto w-auto border-0 shadow-none">
         <CardHeader>
           <CardTitle className="text-2xl">Register</CardTitle>

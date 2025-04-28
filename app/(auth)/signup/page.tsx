@@ -17,7 +17,7 @@ function page() {
           className="size-[70%]"
         />
       </div>
-      <div className="h-max-screen overflow-y-auto p-4">
+      <div className="overflow-y-auto p-4">
         <div className="flex items-center justify-center gap-2 md:justify-start">
           <Link
             href="/"

@@ -60,7 +60,7 @@ export default async function HeroSection(props: {
                     <span>Login</span>
                   </Link>
                 </Button>
-                <Button asChild>
+                <Button className="hidden md:block" asChild>
                   <Link href="/signup">
                     <span>Sign up</span>
                   </Link>
@@ -114,7 +114,7 @@ export default async function HeroSection(props: {
           <div className="flex flex-col max-w-5xl px-6 gap-8">
             {apartments.map((apartment) => (
               <ApartmentCardExpandable
-                key={apartment._id}
+                key={`${apartment._id}-${query || "all"}`}
                 apartment={apartment}
               />
             ))}

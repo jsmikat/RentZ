@@ -20,7 +20,6 @@ async function page() {
   }
 
   const { data } = await GetOwnedApartments(session.user.id);
-  console.log("data", data);
 
   if (!data) {
     return <div>No apartments found</div>;
