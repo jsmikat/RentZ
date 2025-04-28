@@ -10,10 +10,17 @@ import { Button } from "@/components/ui/button";
 import { GetAvailableApartments } from "@/lib/actions";
 import { ApartmentObject } from "@/types/MongodbObjectTypes";
 
-export default async function HeroSection() {
+type SearchParams = Promise<{ [key: string]: string | undefined }>;
+
+export default async function HeroSection(props: {
+  searchParams: SearchParams;
+}) {
   const session = await auth();
 
-  const fetchedData = await GetAvailableApartments();
+  const searchParams = await props.searchParams;
+  const query = searchParams.q;
+
+  const fetchedData = await GetAvailableApartments(query);
 
   const apartments: ApartmentObject[] = fetchedData.data?.apartments || [];
   return (
@@ -67,7 +74,7 @@ export default async function HeroSection() {
       {/* Main Section */}
       <main className="overflow-hidden">
         <section className="relative">
-          <div className="relative py-24 lg:py-28">
+          <div className="relative pt-24 pb-12 lg:pt-20">
             <div className="mx-auto space-y-6 max-w-7xl px-6 md:px-12">
               <div className="text-center sm:mx-auto sm:w-10/12 lg:mr-auto lg:mt-0 lg:w-4/5">
                 <Link
@@ -100,7 +107,10 @@ export default async function HeroSection() {
             </div>
           </div>
         </section>
-        <section id="apartments" className="flex items-center justify-center">
+        <section
+          id="apartments"
+          className="flex items-center justify-center py-2 md:py-10"
+        >
           <div className="flex flex-col max-w-5xl px-6 gap-8">
             {apartments.map((apartment) => (
               <ApartmentCardExpandable

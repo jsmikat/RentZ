@@ -4,6 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { BedSingle, DoorOpen, Toilet } from "lucide-react";
+import { motion } from "motion/react";
 import { useSession } from "next-auth/react";
 
 import { SendRequest } from "@/lib/actions";
@@ -32,7 +33,15 @@ interface Props {
 
 export function ApartmentCard({ apartment }: { apartment: ApartmentObject }) {
   return (
-    <div className="flex flex-col text-left items-start gap-3 p-4 border rounded-lg border-primary shadow-sm">
+    <motion.div
+      initial={{ transform: "translateY(40px)", opacity: 0 }}
+      animate={{
+        transform: "translateY(0)",
+        opacity: 1,
+        transition: { duration: 0.3 },
+      }}
+      className="flex flex-col text-left items-start gap-3 p-4 border rounded-lg border-primary shadow-sm"
+    >
       <div className="flex items-center gap-2">
         <svg
           width={16 * 1.5}
@@ -100,7 +109,7 @@ export function ApartmentCard({ apartment }: { apartment: ApartmentObject }) {
           ৳{apartment.rentalPrice.toLocaleString()}/month
         </p>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -326,7 +335,7 @@ export default function ApartmentCardExpandable({
           </div>
 
           <DialogFooter>
-            <Button type="submit" disabled={isSubmitting} className="mr-2">
+            <Button type="submit" disabled={isSubmitting}>
               Send Request
             </Button>
             <DialogClose asChild>

@@ -213,10 +213,21 @@ export async function GetOwnedApartments(userId: string) {
   }
 }
 
-export async function GetAvailableApartments() {
+export async function GetAvailableApartments(query?: string) {
   dbConnect();
   try {
-    const apartments = await Apartment.find({ allocatedTo: null });
+    const searchQuery = query
+      ? {
+          $or: [
+            { "address.street": { $regex: query, $options: "i" } },
+            { "address.city": { $regex: query, $options: "i" } },
+            { "address.area": { $regex: query, $options: "i" } },
+          ],
+        }
+      : {};
+    const filter = { allocatedTo: null, ...searchQuery }; // Sort by rental price in ascending order
+
+    const apartments = await Apartment.find(filter);
     return {
       success: true,
       data: { apartments: JSON.parse(JSON.stringify(apartments)) },
