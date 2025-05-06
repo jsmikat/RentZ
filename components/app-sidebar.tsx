@@ -1,3 +1,4 @@
+import Link from "next/link";
 import * as React from "react";
 
 import { AlignVerticalJustifyEnd } from "lucide-react";
@@ -35,10 +36,12 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar {...props}>
+    <Sidebar className="p-4" {...props}>
       <SidebarHeader className="flex flex-row">
         <AlignVerticalJustifyEnd className="size-8" />
-        <h1 className="font-black text-3xl">RentZ</h1>
+        <Link href="/" className="font-black text-3xl">
+          RentZ
+        </Link>
       </SidebarHeader>
       <SidebarContent>
         {/* We create a SidebarGroup for each parent. */}

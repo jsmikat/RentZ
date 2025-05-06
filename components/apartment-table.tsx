@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import {
   Table,
   TableBody,
@@ -9,13 +11,14 @@ import {
 } from "@/components/ui/table";
 import { IApartmentDocument } from "@/database/apartment.model";
 
-import { Apartment } from "./apartment";
+import { ApartmentRow } from "./apartment-row";
 
 export function ApartmentsTable({
   apartments,
 }: {
   apartments: IApartmentDocument[];
 }) {
+  const router = useRouter();
   return (
     <Table>
       <TableHeader>
@@ -31,8 +34,18 @@ export function ApartmentsTable({
       </TableHeader>
       <TableBody>
         {apartments.map((apartment) => (
-          <Apartment
-            key={JSON.parse(JSON.stringify(apartment._id))}
+          <ApartmentRow
+            key={Math.random()}
+            handleClick={() => {
+              router.push(
+                new URL(
+                  `/dashboard/owner/apartment/edit/${JSON.parse(
+                    JSON.stringify(apartment._id)
+                  )}`,
+                  window.location.origin
+                ).toString()
+              );
+            }}
             apartment={apartment}
           />
         ))}

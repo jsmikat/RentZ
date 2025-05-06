@@ -5,8 +5,9 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { CreateApartment } from "@/lib/actions";
-import { CreateApartmentFormSchema } from "@/lib/validations";
+import { CreateApartment, EditApartment } from "@/lib/actions";
+import { ApartmentFormSchema } from "@/lib/validations";
+import { ApartmentObject } from "@/types/MongodbObjectTypes";
 
 import { Button } from "./ui/button";
 import {
@@ -28,62 +29,42 @@ import {
 import { Switch } from "./ui/switch";
 import { Textarea } from "./ui/textarea";
 
-type CreateApartmentFormTypes = z.infer<typeof CreateApartmentFormSchema>;
+type ApartmentFormTypes = z.infer<typeof ApartmentFormSchema>;
+type Props = {
+  apartment?: ApartmentObject;
+  type?: "edit" | "create";
+};
 
-const numberOptions = [
-  { value: 1, label: "1" },
-  { value: 2, label: "2" },
-  { value: 3, label: "3" },
-  { value: 4, label: "4" },
-  { value: 5, label: "5" },
-  { value: 6, label: "6" },
-  { value: 7, label: "7" },
-  { value: 8, label: "8" },
-];
-const numberOptionsFloor = [
-  { value: 1, label: "1" },
-  { value: 2, label: "2" },
-  { value: 3, label: "3" },
-  { value: 4, label: "4" },
-  { value: 5, label: "5" },
-  { value: 6, label: "6" },
-  { value: 7, label: "7" },
-  { value: 8, label: "8" },
-  { value: 9, label: "9" },
-  { value: 10, label: "10" },
-  { value: 11, label: "11" },
-  { value: 12, label: "12" },
-  { value: 13, label: "13" },
-  { value: 14, label: "14" },
-  { value: 15, label: "15" },
-  { value: 16, label: "16" },
-  { value: 17, label: "17" },
-  { value: 18, label: "18" },
-  { value: 19, label: "19" },
-  { value: 20, label: "20" },
-];
-
-function AddApartment() {
+function ApartmentForm({ apartment, type = "create" }: Props) {
   const form = useForm({
-    resolver: zodResolver(CreateApartmentFormSchema),
+    resolver: zodResolver(ApartmentFormSchema),
     defaultValues: {
-      street: "",
-      area: "",
-      city: "",
-      totalRooms: 1,
-      bathrooms: 1,
-      bedrooms: 1,
-      hasParking: false,
-      hasElevator: false,
-      description: "",
-      rentalPrice: 0,
-      size: 0,
-      totalFloors: 1,
-      floor: 1,
+      street: apartment?.address.street || "",
+      area: apartment?.address.area || "",
+      city: apartment?.address.city || "",
+      totalRooms: apartment?.totalRooms || 1,
+      bathrooms: apartment?.bathrooms || 1,
+      bedrooms: apartment?.bedrooms || 1,
+      hasParking: apartment?.hasParking || false,
+      hasElevator: apartment?.hasElevator || false,
+      description: apartment?.description || "",
+      rentalPrice: apartment?.rentalPrice || 0,
+      size: apartment?.size || 0,
+      totalFloors: apartment?.totalFloors || 1,
+      floor: apartment?.floor || 1,
     },
   });
 
-  async function onSubmit(values: CreateApartmentFormTypes) {
+  async function onSubmit(values: ApartmentFormTypes) {
+    if (type === "edit") {
+      const data = await EditApartment(apartment?._id as string, values);
+      if (!data.success) {
+        toast.error("Error updating apartment");
+        return;
+      }
+      toast.success("Apartment updated successfully!");
+      return;
+    }
     const data = await CreateApartment(values);
     form.reset();
     if (!data.success) {
@@ -401,11 +382,44 @@ function AddApartment() {
             </div>
           </div>
 
-          <Button type="submit">Submit</Button>
+          <Button type="submit">{type === "create" ? "Submit" : "Save"}</Button>
         </form>
       </Form>
     </>
   );
 }
 
-export default AddApartment;
+export default ApartmentForm;
+
+const numberOptions = [
+  { value: 1, label: "1" },
+  { value: 2, label: "2" },
+  { value: 3, label: "3" },
+  { value: 4, label: "4" },
+  { value: 5, label: "5" },
+  { value: 6, label: "6" },
+  { value: 7, label: "7" },
+  { value: 8, label: "8" },
+];
+const numberOptionsFloor = [
+  { value: 1, label: "1" },
+  { value: 2, label: "2" },
+  { value: 3, label: "3" },
+  { value: 4, label: "4" },
+  { value: 5, label: "5" },
+  { value: 6, label: "6" },
+  { value: 7, label: "7" },
+  { value: 8, label: "8" },
+  { value: 9, label: "9" },
+  { value: 10, label: "10" },
+  { value: 11, label: "11" },
+  { value: 12, label: "12" },
+  { value: 13, label: "13" },
+  { value: 14, label: "14" },
+  { value: 15, label: "15" },
+  { value: 16, label: "16" },
+  { value: 17, label: "17" },
+  { value: 18, label: "18" },
+  { value: 19, label: "19" },
+  { value: 20, label: "20" },
+];

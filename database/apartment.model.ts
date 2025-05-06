@@ -5,6 +5,7 @@ export interface IApartment {
   allocatedTo: {
     userId: Types.ObjectId;
     allocatedAt: Date;
+    // paymentHistory:
   } | null;
 
   address: {
@@ -23,6 +24,7 @@ export interface IApartment {
   hasElevator?: boolean;
   totalFloors: number;
   floor: number;
+  requests?: Types.ObjectId[];
 }
 
 export interface IApartmentDocument extends IApartment, Document {}
@@ -52,6 +54,10 @@ const ApartmentSchema = new Schema<IApartment>(
     bathrooms: { type: Number, required: true },
     totalFloors: { type: Number, required: true },
     floor: { type: Number, required: true },
+    requests: {
+      type: [{ type: Schema.Types.ObjectId, ref: "Request" }],
+      default: [],
+    },
   },
   {
     timestamps: true,

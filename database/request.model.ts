@@ -1,36 +1,36 @@
 import { Schema, Types, model, models } from "mongoose";
 
 export interface IRequest {
-  userId: Types.ObjectId;
+  requesterId: Types.ObjectId;
   apartmentId: Types.ObjectId;
   ownerId: Types.ObjectId;
-  tenancyType: "bachelor" | "family";
-  message: string;
-  status: "pending" | "accepted" | "rejected";
-  userConfirmation: boolean;
-  ownerConfirmation: boolean;
+  type: "bachelor" | "family";
+  members: number;
+  additionalInfo: string;
+  requestStatus: "pending" | "accepted" | "rejected";
+  isRequesterConfirmed: boolean;
 }
 
 export interface IRequestDocument extends IRequest, Document {}
 
 const RequestSchema = new Schema<IRequest>(
   {
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    requesterId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     apartmentId: {
       type: Schema.Types.ObjectId,
       ref: "Apartment",
       required: true,
     },
     ownerId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    tenancyType: { type: String, enum: ["bachelor", "family"], required: true },
-    message: { type: String, required: true },
-    status: {
+    type: { type: String, enum: ["bachelor", "family"], required: true },
+    members: { type: Number, required: true },
+    additionalInfo: { type: String, required: true },
+    requestStatus: {
       type: String,
       enum: ["pending", "accepted", "rejected"],
       default: "pending",
     },
-    userConfirmation: { type: Boolean, default: false },
-    ownerConfirmation: { type: Boolean, default: false },
+    isRequesterConfirmed: { type: Boolean, default: false },
   },
   {
     timestamps: true,
@@ -38,3 +38,5 @@ const RequestSchema = new Schema<IRequest>(
 );
 
 const Request = models?.Request || model<IRequest>("Request", RequestSchema);
+
+export default Request;

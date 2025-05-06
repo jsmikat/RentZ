@@ -12,5 +12,5 @@ export interface ApartmentObject {
   hasElevator: boolean;
   totalFloors: number;
   floor: number;
-  ownerId: string;
+  owner: string;
 }

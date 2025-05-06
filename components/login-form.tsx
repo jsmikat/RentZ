@@ -38,7 +38,6 @@ export function LoginForm({ className }: { className?: string }) {
       toast.error(signedIn.error);
       return;
     }
-
     router.push(callbackUrl, { scroll: false });
   }
   return (

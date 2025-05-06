@@ -1,37 +1,35 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
 
 import { BedSingle, DoorOpen, Toilet } from "lucide-react";
 import { motion } from "motion/react";
-import { useSession } from "next-auth/react";
 
-import { SendRequest } from "@/lib/actions";
+import { cn } from "@/lib/utils";
 import { ApartmentObject } from "@/types/MongodbObjectTypes";
 
+import RequestForm from "./request-form";
 import Badge from "./ui/badge";
-import { Button } from "./ui/button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
-import { Label } from "./ui/label";
-import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
-import { Separator } from "./ui/separator";
-import { Textarea } from "./ui/textarea";
 
 interface Props {
   apartments: ApartmentObject[];
 }
 
-export function ApartmentCard({ apartment }: { apartment: ApartmentObject }) {
+export function ApartmentCard({
+  apartment,
+  className,
+}: {
+  apartment: ApartmentObject;
+  className?: string;
+}) {
   return (
     <motion.div
       initial={{ transform: "translateY(40px)", opacity: 0 }}
@@ -40,7 +38,10 @@ export function ApartmentCard({ apartment }: { apartment: ApartmentObject }) {
         opacity: 1,
         transition: { duration: 0.3 },
       }}
-      className="flex flex-col text-left items-start gap-3 p-4 border rounded-lg border-primary shadow-sm"
+      className={cn(
+        "flex flex-col text-left items-start gap-3 p-4 border rounded-lg border-primary shadow-sm",
+        className
+      )}
     >
       <div className="flex items-center gap-2">
         <svg
@@ -84,7 +85,7 @@ export function ApartmentCard({ apartment }: { apartment: ApartmentObject }) {
           }`}</p>
         </div>
       </div>
-      <div className="flex items-center gap-2 sm:gap-4 flex-col sm:flex-row">
+      <div className="flex lg:items-center gap-2 sm:gap-4 flex-col lg:flex-row">
         <div className="flex items-center gap-2">
           <p className="text-base font-bold">Elevetor: </p>
           {apartment.hasElevator ? (
@@ -118,32 +119,11 @@ export default function ApartmentCardExpandable({
 }: {
   apartment: ApartmentObject;
 }) {
-  const { data: session } = useSession();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const modalId = searchParams.get("modalId");
 
-  const [tenancyType, setTenancyType] = useState<"bachelor" | "family">(
-    "bachelor"
-  );
-  const [message, setMessage] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Restore form state on return after signin
-  useEffect(() => {
-    if (session && modalId === apartment._id && typeof window !== "undefined") {
-      const saved = window.sessionStorage.getItem(`Req-${apartment._id}`);
-      if (saved) {
-        const { tenancyType, message } = JSON.parse(saved);
-        setTenancyType(tenancyType);
-        setMessage(message);
-        window.sessionStorage.removeItem(`Req-${apartment._id}`);
-      }
-    }
-  }, [session, modalId, apartment._id]);
-
-  // Determine if dialog is open
   const open = modalId === apartment._id;
 
   return (
@@ -249,99 +229,14 @@ export default function ApartmentCardExpandable({
             </p>
           </div>
         </div>
-        <Separator />
 
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            // If not signed in, save state and redirect to sign in
-            if (!session && typeof window !== "undefined") {
-              window.sessionStorage.setItem(
-                `Req-${apartment._id}`,
-                JSON.stringify({ tenancyType, message })
-              );
-
-              router.push(
-                `/signin?callbackUrl=${pathname}?modalId=${apartment._id}`
-              );
-              return;
-            }
-            setIsSubmitting(true);
-            await SendRequest({
-              apartmentId: apartment._id,
-              tenancyType,
-              message,
-            });
-            setIsSubmitting(false);
-            // close modal after success
-            router.push(pathname, { scroll: false });
-          }}
-          className="space-y-4"
-        >
-          <div className="flex gap-4 items-center">
-            <Label className="font-bold" id={`tenancy-type-${apartment._id}`}>
-              Request Type
-            </Label>
-            <RadioGroup
-              aria-labelledby={`tenancy-type-${apartment._id}`}
-              name="tenancyType"
-              value={tenancyType}
-              onValueChange={(val) =>
-                setTenancyType(val as "bachelor" | "family")
-              }
-              className="flex space-x-4"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem
-                  value="bachelor"
-                  id={`bachelor-${apartment._id}`}
-                />
-                <Label
-                  className="font-normal"
-                  htmlFor={`bachelor-${apartment._id}`}
-                >
-                  Bachelor
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="family" id={`family-${apartment._id}`} />
-                <Label
-                  className="font-normal"
-                  htmlFor={`family-${apartment._id}`}
-                >
-                  Family
-                </Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          <div className="space-y-1">
-            <Label
-              className="mb-2 font-bold"
-              htmlFor={`message-${apartment._id}`}
-            >
-              Description
-            </Label>
-            <Textarea
-              id={`message-${apartment._id}`}
-              name="message"
-              placeholder="Add a description..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              rows={4}
-              className="w-full"
-            />
-          </div>
-
-          <DialogFooter>
-            <Button type="submit" disabled={isSubmitting}>
-              Send Request
-            </Button>
-            <DialogClose asChild>
-              <Button variant="secondary">Cancel</Button>
-            </DialogClose>
-          </DialogFooter>
-        </form>
+        <RequestForm
+          apartmentId={apartment._id}
+          owner={apartment.owner}
+          modalId={modalId}
+          pathname={pathname}
+          router={router}
+        />
       </DialogContent>
     </Dialog>
   );

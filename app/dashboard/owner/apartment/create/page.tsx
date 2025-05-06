@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import AddApartment from "@/components/create-apartment";
+import ApartmentForm from "@/components/apartment-form";
 
 async function page() {
   const session = await auth();
@@ -14,7 +14,7 @@ async function page() {
     }
   }
 
-  return <AddApartment />;
+  return <ApartmentForm />;
 }
 
 export default page;

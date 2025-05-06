@@ -1,3 +1,4 @@
+import { auth } from "@/auth";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -11,6 +12,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  
   return (
     <SidebarProvider>
       <AppSidebar />

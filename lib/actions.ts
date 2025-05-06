@@ -6,9 +6,10 @@ import { z } from "zod";
 
 import { auth, signIn } from "@/auth";
 import Apartment from "@/database/apartment.model";
+import Request from "@/database/request.model";
 import User from "@/database/user.model";
 import {
-  CreateApartmentFormSchema,
+  ApartmentFormSchema,
   SignInFormSchema,
   SignupFormSchema,
 } from "@/lib/validations";
@@ -18,7 +19,7 @@ import dbConnect from "./mongoose";
 
 type SignUpParams = z.infer<typeof SignupFormSchema>;
 type SignInParama = z.infer<typeof SignInFormSchema>;
-type ApartmentParams = z.infer<typeof CreateApartmentFormSchema>;
+type ApartmentParams = z.infer<typeof ApartmentFormSchema>;
 
 export async function SignUp(params: SignUpParams) {
   const parsedData = SignupFormSchema.safeParse(params);
@@ -27,7 +28,7 @@ export async function SignUp(params: SignUpParams) {
   }
   const { name, email, password, phone, nidNumber, role } = parsedData.data;
 
-  dbConnect();
+  await dbConnect();
 
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -84,7 +85,7 @@ export async function SignIn(params: SignInParama) {
   }
   const { email, password } = parsedData.data;
 
-  dbConnect();
+  await dbConnect();
 
   try {
     const existingUser = await User.findOne({ email });
@@ -133,7 +134,7 @@ export async function SignIn(params: SignInParama) {
 }
 
 export async function CreateApartment(params: ApartmentParams) {
-  const parsedData = CreateApartmentFormSchema.safeParse(params);
+  const parsedData = ApartmentFormSchema.safeParse(params);
 
   const session = await auth();
 
@@ -166,7 +167,7 @@ export async function CreateApartment(params: ApartmentParams) {
   } = parsedData.data;
 
   try {
-    dbConnect();
+    await dbConnect();
     await Apartment.create({
       owner: session?.user.id,
       address: {
@@ -184,6 +185,7 @@ export async function CreateApartment(params: ApartmentParams) {
       hasElevator,
       totalFloors,
       floor,
+      // requests: [],
     });
 
     return {
@@ -198,7 +200,7 @@ export async function CreateApartment(params: ApartmentParams) {
 }
 
 export async function GetOwnedApartments(userId: string) {
-  dbConnect();
+  await dbConnect();
   try {
     const apartments = await Apartment.find({ owner: userId });
     return {
@@ -214,7 +216,7 @@ export async function GetOwnedApartments(userId: string) {
 }
 
 export async function GetAvailableApartments(query?: string) {
-  dbConnect();
+  await dbConnect();
   try {
     const searchQuery = query
       ? {
@@ -240,10 +242,161 @@ export async function GetAvailableApartments(query?: string) {
   }
 }
 
-export async function SendRequest(params: {
+export async function SendRequest(Params: {
   apartmentId: string;
-  tenancyType: string;
-  message: string;
+  type: string;
+  additionalInfo: string;
+  requesterId: string;
+  owner: string;
+  members: number;
 }) {
-  return;
+  const { apartmentId, type, additionalInfo, requesterId, owner, members } =
+    Params;
+
+  await dbConnect();
+
+  const session = await auth();
+  if (!session) {
+    throw new UnauthorizedError("Unauthenticated User");
+  }
+
+  try {
+    const newReq = await Request.create([
+      {
+        apartmentId,
+        ownerId: owner,
+        requesterId,
+        type,
+        members,
+        additionalInfo,
+      },
+    ]);
+
+    await Apartment.findByIdAndUpdate(apartmentId, {
+      $push: { requests: newReq[0]._id },
+    });
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error during request creation:", err);
+    return { success: false, error: err.message || "SendRequest failed" };
+  }
 }
+
+export async function GetRequests(userId: string) {
+  await dbConnect();
+  try {
+    const requests = await Request.find({ requesterId: userId })
+      .populate({
+        path: "apartmentId",
+        model: Apartment,
+      })
+      .populate({
+        path: "requesterId",
+        model: User,
+      })
+      .populate({
+        path: "ownerId",
+        model: User,
+      });
+
+    return {
+      success: true,
+      data: JSON.parse(JSON.stringify(requests)),
+    };
+  } catch (error) {
+    console.error("Error fetching sent requests:", error);
+    return {
+      success: false,
+    };
+  }
+}
+
+export async function GetApartment(apartmentId: string) {
+  await dbConnect();
+  try {
+    const apartment = await Apartment.findById(apartmentId);
+    return {
+      success: true,
+      data: { apartment: JSON.parse(JSON.stringify(apartment)) },
+    };
+  } catch (error) {
+    console.error("Error fetching apartment:", error);
+    return {
+      success: false,
+    };
+  }
+}
+
+export async function DeleteApartment(apartmentId: string) {
+  await dbConnect();
+  try {
+    const apartment = await Apartment.findById(apartmentId);
+    if (!apartment) {
+      throw new NotFoundError("Apartment");
+    }
+    await Apartment.findByIdAndDelete(apartmentId);
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error("Error deleting apartment:", error);
+    return {
+      success: false,
+    };
+  }
+}
+
+export async function EditApartment(
+  apartmentId: string,
+  params: ApartmentParams
+) {
+  const parsedData = ApartmentFormSchema.safeParse(params);
+
+  if (!parsedData.success) {
+    throw new Error("Invalid data provided");
+  }
+
+  const {
+    street,
+    city,
+    rentalPrice,
+    size,
+    totalRooms,
+    bedrooms,
+    bathrooms,
+    hasParking,
+    hasElevator,
+    area,
+    totalFloors,
+    floor,
+    description,
+  } = parsedData.data;
+
+  await dbConnect();
+  try {
+    await Apartment.findByIdAndUpdate(apartmentId, {
+      address: { street, city, area },
+      rentalPrice,
+      size,
+      description,
+      totalRooms,
+      bedrooms,
+      bathrooms,
+      hasParking,
+      hasElevator,
+      totalFloors,
+      floor,
+    });
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error("Error during apartment update:", error);
+    return {
+      success: false,
+    };
+  }
+}
+

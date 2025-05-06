@@ -35,7 +35,7 @@ export const SignInFormSchema = z.object({
     .regex(/[a-zA-Z0-9]/, { message: "Password must be alphanumeric" }),
 });
 
-export const CreateApartmentFormSchema = z.object({
+export const ApartmentFormSchema = z.object({
   totalRooms: z.number().min(1, { message: "Total rooms is required" }),
   bedrooms: z
     .number()
