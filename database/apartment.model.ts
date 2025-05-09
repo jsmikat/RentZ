@@ -2,9 +2,9 @@ import { Document, Schema, Types, model, models } from "mongoose";
 
 export interface IApartment {
   owner: Types.ObjectId;
-  allocatedTo: {
+  allottedTo: {
     userId: Types.ObjectId;
-    allocatedAt: Date;
+    allottedAt: Date;
     // paymentHistory:
   } | null;
 
@@ -32,10 +32,10 @@ export interface IApartmentDocument extends IApartment, Document {}
 const ApartmentSchema = new Schema<IApartment>(
   {
     owner: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    allocatedTo: {
+    allottedTo: {
       type: {
         userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-        allocatedAt: { type: Date, default: Date.now },
+        allottedAt: { type: Date, default: Date.now },
       },
       default: null,
     },

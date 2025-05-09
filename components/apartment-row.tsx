@@ -15,12 +15,16 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { IApartmentDocument } from "@/database/apartment.model";
 import { DeleteApartment } from "@/lib/actions";
 
+import { Badge } from "./ui/badge";
+
 export function ApartmentRow({
   apartment,
   handleClick,
+  requestStatus,
 }: {
   apartment: IApartmentDocument;
   handleClick?: () => void;
+  requestStatus?: "pending" | "accepted" | "rejected";
 }) {
   const router = useRouter();
   return (
@@ -31,7 +35,29 @@ export function ApartmentRow({
         {apartment.description}
       </TableCell>
       <TableCell className="hidden md:table-cell">
-        {JSON.parse(JSON.stringify(apartment.allocatedTo)) || "Not Allocated"}
+        {requestStatus ? (
+          requestStatus === "accepted" ? (
+            <Badge className="rounded-full text-green-700 bg-green-100">
+              Accepted
+            </Badge>
+          ) : requestStatus === "rejected" ? (
+            <Badge className="rounded-full text-rose-700 bg-rose-100">
+              Rejected
+            </Badge>
+          ) : (
+            <Badge className="rounded-full text-amber-700 bg-amber-100">
+              Pending
+            </Badge>
+          )
+        ) : apartment.allottedTo ? (
+          <Badge className="rounded-full text-green-700 bg-green-100">
+            Allotted
+          </Badge>
+        ) : (
+          <Badge className="rounded-full text-rose-700 bg-rose-100">
+            Not Allotted
+          </Badge>
+        )}
       </TableCell>
       <TableCell>
         <DropdownMenu>

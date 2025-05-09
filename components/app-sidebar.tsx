@@ -3,7 +3,6 @@ import * as React from "react";
 
 import { AlignVerticalJustifyEnd } from "lucide-react";
 
-import SignOut from "@/components/signOut";
 import {
   Sidebar,
   SidebarContent,
@@ -17,6 +16,8 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 
+import SignoutButton from "./signout-button";
+
 // This is sample data.
 const data = {
   navMain: [
@@ -28,6 +29,10 @@ const data = {
           title: "Add Apartment",
           url: "/dashboard/owner/apartment/create",
           // isActive: true,
+        },
+        {
+          title: "Requests",
+          url: "/dashboard/owner/apartment/requests",
         },
       ],
     },
@@ -48,17 +53,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {data.navMain.map((item) => (
           <SidebarGroup key={item.title}>
             <SidebarGroupLabel>{item.title}</SidebarGroupLabel>
-            <SidebarGroupContent>
+            <SidebarGroupContent className="flex flex-col gap-4">
               <SidebarMenu>
                 {item.items.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={item.isActive}>
+                    <SidebarMenuButton asChild>
                       <a href={item.url}>{item.title}</a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>
-              <SignOut />
+              <SignoutButton />
             </SidebarGroupContent>
           </SidebarGroup>
         ))}

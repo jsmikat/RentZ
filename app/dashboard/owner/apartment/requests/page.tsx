@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
-import { ApartmentCard } from "@/components/apartment-card";
-import { GetRequests } from "@/lib/actions";
+import { ApartmentsTable } from "@/components/apartment-table";
+import { GetOwnerRequestedApartments } from "@/lib/actions";
 
 async function page() {
   const session = await auth();
@@ -11,13 +11,14 @@ async function page() {
     return <div>Unauthorized</div>;
   }
 
-  const requestedApartments = await GetRequests(session?.user?.id);
+  const requestedApartments = await GetOwnerRequestedApartments(
+    session?.user?.id
+  );
   return (
-    <>
-      {requestedApartments.data?.requests.map((apartment) => (
-        <ApartmentCard apartment={apartment.apartment} />
-      ))}
-    </>
+    <ApartmentsTable
+      relativePath="/dashboard/owner/apartment/requests/"
+      apartments={requestedApartments.data?.requests}
+    />
   );
 }
 

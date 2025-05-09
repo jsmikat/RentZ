@@ -14,9 +14,13 @@ import { IApartmentDocument } from "@/database/apartment.model";
 import { ApartmentRow } from "./apartment-row";
 
 export function ApartmentsTable({
+  requests,
   apartments,
+  relativePath,
 }: {
-  apartments: IApartmentDocument[];
+  apartments?: IApartmentDocument[];
+  relativePath: string;
+  requests?: any;
 }) {
   const router = useRouter();
   return (
@@ -24,31 +28,45 @@ export function ApartmentsTable({
       <TableHeader>
         <TableRow>
           <TableHead>Address</TableHead>
-          <TableHead>Rental Price</TableHead>
+          <TableHead className="hidden md:table-cell">Rental Price</TableHead>
           <TableHead className="hidden md:table-cell">Description</TableHead>
-          <TableHead className="hidden md:table-cell">Allocated To</TableHead>
+          <TableHead>Status</TableHead>
           <TableHead>
             <span className="sr-only">Actions</span>
           </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {apartments.map((apartment) => (
-          <ApartmentRow
-            key={Math.random()}
-            handleClick={() => {
-              router.push(
-                new URL(
-                  `/dashboard/owner/apartment/edit/${JSON.parse(
-                    JSON.stringify(apartment._id)
-                  )}`,
-                  window.location.origin
-                ).toString()
-              );
-            }}
-            apartment={apartment}
-          />
-        ))}
+        {apartments
+          ? apartments.map((apartment) => (
+              <ApartmentRow
+                key={Math.random()}
+                handleClick={() => {
+                  router.push(
+                    new URL(
+                      `${relativePath}${JSON.parse(JSON.stringify(apartment._id))}`,
+                      window.location.origin
+                    ).toString()
+                  );
+                }}
+                apartment={apartment}
+              />
+            ))
+          : requests?.map((request: any) => (
+              <ApartmentRow
+                key={Math.random()}
+                handleClick={() => {
+                  router.push(
+                    new URL(
+                      `${relativePath}${JSON.parse(JSON.stringify(request._id))}`,
+                      window.location.origin
+                    ).toString()
+                  );
+                }}
+                apartment={request.apartmentId}
+                requestStatus={request.requestStatus}
+              />
+            ))}
       </TableBody>
     </Table>
   );

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SelectValue } from "@radix-ui/react-select";
+import { getSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -54,13 +55,14 @@ export default function RegisterForm() {
   async function onSubmit(values: z.infer<typeof SignupFormSchema>) {
     const submitted = await SignUp(values);
     if (submitted.success) {
+      getSession();
       router.push("/");
     }
   }
 
   return (
     <div className="flex min-h-screen overflow-y-auto size-full items-center justify-center py-16">
-      <Card className="mx-auto w-auto border-0 shadow-none">
+      <Card className="mx-auto mt-10 w-auto border-0 shadow-none">
         <CardHeader>
           <CardTitle className="text-2xl">Register</CardTitle>
           <CardDescription>

@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 import { SendRequest } from "@/lib/actions";
 
@@ -66,7 +67,7 @@ function RequestForm({ apartmentId, router, pathname, modalId, owner }: Props) {
       return;
     }
 
-    await SendRequest({
+    const sentRequest = await SendRequest({
       apartmentId,
       type,
       additionalInfo,
@@ -74,7 +75,11 @@ function RequestForm({ apartmentId, router, pathname, modalId, owner }: Props) {
       requesterId: session?.user.id,
       owner,
     });
-
+    if (!sentRequest.success) {
+      toast.error("Failed to send request. Please try again.");
+      return;
+    }
+    toast.success("Request sent successfully!");
     router.push(pathname, { scroll: false });
   }
   return (

@@ -227,7 +227,7 @@ export async function GetAvailableApartments(query?: string) {
           ],
         }
       : {};
-    const filter = { allocatedTo: null, ...searchQuery }; // Sort by rental price in ascending order
+    const filter = { allottedTo: null, ...searchQuery }; // Sort by rental price in ascending order
 
     const apartments = await Apartment.find(filter);
     return {
@@ -282,7 +282,7 @@ export async function SendRequest(Params: {
   }
 }
 
-export async function GetRequests(userId: string) {
+export async function GetUserRequests(userId: string) {
   await dbConnect();
   try {
     const requests = await Request.find({ requesterId: userId })
@@ -311,10 +311,48 @@ export async function GetRequests(userId: string) {
   }
 }
 
+export async function GetUserRequest(requestId: string) {
+  await dbConnect();
+  try {
+    const request = await Request.findById(requestId)
+      .populate({
+        path: "apartmentId",
+        model: Apartment,
+      })
+      .populate({
+        path: "ownerId",
+        model: User,
+        select: "name phoneNumber",
+      });
+
+    if (!request) {
+      throw new NotFoundError("Request");
+    }
+
+    return {
+      success: true,
+      data: JSON.parse(JSON.stringify(request)),
+    };
+  } catch (error) {
+    console.error("Error fetching request:", error);
+    return {
+      success: false,
+    };
+  }
+}
+
 export async function GetApartment(apartmentId: string) {
   await dbConnect();
   try {
-    const apartment = await Apartment.findById(apartmentId);
+    const apartment = await Apartment.findById(apartmentId).populate({
+      path: "requests",
+      populate: {
+        path: "requesterId",
+        model: User,
+        select: "_id name phoneNumber",
+      },
+    });
+
     return {
       success: true,
       data: { apartment: JSON.parse(JSON.stringify(apartment)) },
@@ -400,3 +438,103 @@ export async function EditApartment(
   }
 }
 
+export async function GetOwnerRequestedApartments(userId: string) {
+  await dbConnect();
+  try {
+    const requests = await Apartment.find({
+      owner: userId,
+      requests: { $exists: true, $ne: [] },
+    }).populate({ path: "requests", model: Request });
+    return {
+      success: true,
+      data: { requests: JSON.parse(JSON.stringify(requests)) },
+    };
+  } catch (error) {
+    console.error("Error fetching requested apartments:", error);
+    return {
+      success: false,
+    };
+  }
+}
+
+export async function GetApartmentRequests(apartmentId: string) {
+  await dbConnect();
+  try {
+    const apartment = await Apartment.findById(apartmentId).populate({
+      path: "requests",
+      model: Request,
+    });
+    if (!apartment) {
+      throw new NotFoundError("Apartment");
+    }
+    return {
+      success: true,
+      data: { requests: JSON.parse(JSON.stringify(apartment.requests)) },
+    };
+  } catch (error) {
+    console.error("Error fetching apartment requests:", error);
+    return {
+      success: false,
+    };
+  }
+}
+
+export async function AcceptRequest(requestId: string) {
+  await dbConnect();
+  try {
+    const request = await Request.findByIdAndUpdate(requestId, {
+      requestStatus: "accepted",
+    });
+    if (!request) {
+      throw new NotFoundError("Request");
+    }
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error("Error accepting request:", error);
+    return {
+      success: false,
+    };
+  }
+}
+
+export async function RejectRequest(requestId: string) {
+  await dbConnect();
+  try {
+    const requestDoc = await Request.findByIdAndUpdate(requestId, {
+      requestStatus: "rejected",
+    });
+    if (!requestDoc) {
+      throw new NotFoundError("Request");
+    }
+    // await Apartment.findByIdAndUpdate(requestDoc.apartmentId, {
+    //   $pull: { requests: { _id: requestId } },
+    // });
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error("Error rejecting request:", error);
+    return {
+      success: false,
+    };
+  }
+}
+
+export async function ConfirmRequest(requestId: string) {
+  await dbConnect();
+  try {
+    const requestDoc = await Request.findByIdAndUpdate(requestId, {
+      isRequesterConfirmed: true,
+    });
+    if (!requestDoc) {
+      throw new NotFoundError("Request");
+    }
+  } catch (error) {
+    console.error("Error confirming request:", error);
+    return {
+      success: false,
+    };
+  }
+}

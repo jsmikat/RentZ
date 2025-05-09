@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { getSession } from "next-auth/react";
+import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -14,6 +15,8 @@ import { Label } from "@/components/ui/label";
 import { SignIn } from "@/lib/actions";
 import { cn } from "@/lib/utils";
 import { SignInFormSchema } from "@/lib/validations";
+
+import { PasswordInput } from "./ui/password-input";
 
 export function LoginForm({ className }: { className?: string }) {
   const router = useRouter();
@@ -30,16 +33,13 @@ export function LoginForm({ className }: { className?: string }) {
   async function onSubmit(values: z.infer<typeof SignInFormSchema>) {
     const signedIn = await SignIn(values);
     if (signedIn.success === false) {
-      // form.setError("password", {
-      //   type: "manual",
-      //   message: "Password is incorrect",
-      // });
-
       toast.error(signedIn.error);
       return;
     }
+    await getSession();
     router.push(callbackUrl, { scroll: false });
   }
+
   return (
     <form
       className={cn("flex flex-col gap-6", className)}
@@ -54,12 +54,19 @@ export function LoginForm({ className }: { className?: string }) {
       <div className="grid gap-6">
         <div className="grid gap-3">
           <Label htmlFor="email">Email</Label>
-          <Input
-            {...form.register("email")}
-            id="email"
-            type="email"
-            placeholder="email@example.com"
-            required
+          <Controller
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <Input
+                className="bg-white"
+                {...field}
+                id="email"
+                type="email"
+                placeholder="email@example.com"
+                required
+              />
+            )}
           />
           {form.formState.errors.email && (
             <p className="text-destructive text-sm">
@@ -71,12 +78,18 @@ export function LoginForm({ className }: { className?: string }) {
           <div className="flex items-center">
             <Label htmlFor="password">Password</Label>
           </div>
-          <Input
-            {...form.register("password")}
-            id="password"
-            type="password"
-            placeholder="******"
-            required
+          <Controller
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <PasswordInput
+                className="bg-white"
+                {...field}
+                id="password"
+                placeholder="******"
+                required
+              />
+            )}
           />
           {form.formState.errors.password && (
             <p className="text-destructive text-sm">

@@ -25,7 +25,12 @@ async function page() {
     return <div>No apartments found</div>;
   }
 
-  return <ApartmentsTable apartments={data.apartments} />;
+  return (
+    <ApartmentsTable
+      relativePath="/dashboard/owner/apartment/"
+      apartments={data.apartments}
+    />
+  );
 }
 
 export default page;

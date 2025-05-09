@@ -5,7 +5,7 @@ import { AlignVerticalJustifyEnd, ArrowRight } from "lucide-react";
 import { auth } from "@/auth";
 import ApartmentCardExpandable from "@/components/apartment-card";
 import { SearchForm } from "@/components/search-form";
-import SignoutButton from "@/components/signoutButton";
+import SignoutButton from "@/components/signout-button";
 import { Button } from "@/components/ui/button";
 import { GetAvailableApartments } from "@/lib/actions";
 import { ApartmentObject } from "@/types/MongodbObjectTypes";
@@ -79,7 +79,7 @@ export default async function HeroSection(props: {
               <div className="text-center sm:mx-auto sm:w-10/12 lg:mr-auto lg:mt-0 lg:w-4/5">
                 <Link
                   href="#apartments"
-                  className="rounded-(--radius) mx-auto flex w-fit items-center gap-2 border p-1 pr-3"
+                  className="rounded-(--radius) mx-auto flex w-fit items-center gap-2 border p-1 pr-3 bg-white"
                 >
                   <span className="bg-muted rounded-[calc(var(--radius)-0.25rem)] px-2 py-1 text-xs">
                     New
