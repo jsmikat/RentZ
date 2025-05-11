@@ -142,7 +142,7 @@ export default function ApartmentCardExpandable({
       <DialogTrigger className="cursor-pointer">
         <ApartmentCard apartment={apartment} />
       </DialogTrigger>
-      <DialogContent className="w-[90vw] sm:w-[420px] md:w-full overflow-y-auto max-h-screen rounded-lg">
+      <DialogContent className="w-[90vw] sm:w-[420px] md:w-full overflow-y-auto max-h-[94dvh] rounded-lg">
         <DialogHeader>
           <DialogTitle>Apartment Details</DialogTitle>
           <DialogDescription>

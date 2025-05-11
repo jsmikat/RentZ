@@ -1,11 +1,12 @@
 "use server";
 
 import bcrypt from "bcryptjs";
-import mongoose from "mongoose";
+import mongoose, { PipelineStage, Types } from "mongoose";
 import { z } from "zod";
 
 import { auth, signIn } from "@/auth";
 import Apartment from "@/database/apartment.model";
+import Payment from "@/database/payment.model";
 import Request from "@/database/request.model";
 import User from "@/database/user.model";
 import {
@@ -344,14 +345,20 @@ export async function GetUserRequest(requestId: string) {
 export async function GetApartment(apartmentId: string) {
   await dbConnect();
   try {
-    const apartment = await Apartment.findById(apartmentId).populate({
-      path: "requests",
-      populate: {
-        path: "requesterId",
+    const apartment = await Apartment.findById(apartmentId)
+      .populate({
+        path: "requests",
+        populate: {
+          path: "requesterId",
+          model: User,
+          select: "_id name phoneNumber",
+        },
+      })
+      .populate({
+        path: "allottedTo.userId",
         model: User,
-        select: "_id name phoneNumber",
-      },
-    });
+        select: "name phoneNumber email nidNumber",
+      });
 
     return {
       success: true,
@@ -524,15 +531,220 @@ export async function RejectRequest(requestId: string) {
 
 export async function ConfirmRequest(requestId: string) {
   await dbConnect();
+
   try {
-    const requestDoc = await Request.findByIdAndUpdate(requestId, {
-      isRequesterConfirmed: true,
+    const requestDoc = await Request.findByIdAndUpdate(
+      requestId,
+      { isRequesterConfirmed: true },
+      { new: true }
+    );
+
+    if (!requestDoc) throw new NotFoundError("Request");
+
+    const apartmentDoc = await Apartment.findById(requestDoc.apartmentId);
+    if (!apartmentDoc) throw new NotFoundError("Apartment");
+
+    await Request.deleteMany({ _id: { $in: apartmentDoc.requests } });
+
+    await Apartment.findByIdAndUpdate(
+      requestDoc.apartmentId,
+      {
+        $set: {
+          allottedTo: {
+            userId: requestDoc.requesterId,
+            allocatedAt: new Date(),
+            paymentHistory: [],
+          },
+          requests: [],
+        },
+      },
+      { new: true }
+    );
+
+    await Request.deleteMany({ requesterId: requestDoc.requesterId });
+
+    await User.findByIdAndUpdate(requestDoc.requesterId, {
+      userAllottedTo: requestDoc.apartmentId,
     });
-    if (!requestDoc) {
-      throw new NotFoundError("Request");
-    }
+
+    return { success: true };
   } catch (error) {
     console.error("Error confirming request:", error);
+    return { success: false };
+  }
+}
+
+export async function GetUnpaidMonths(apartmentId: string) {
+  await dbConnect();
+
+  const objectId = new Types.ObjectId(apartmentId);
+
+  const pipeline: PipelineStage[] = [
+    { $match: { _id: objectId } },
+
+    {
+      $project: {
+        allottedAt: "$allottedTo.allottedAt",
+        now: "$$NOW",
+      },
+    },
+
+    {
+      $addFields: {
+        monthsElapsed: {
+          $add: [
+            {
+              $dateDiff: {
+                startDate: "$allottedAt",
+                endDate: "$$NOW",
+                unit: "month",
+              },
+            },
+            1,
+          ],
+        },
+      },
+    },
+
+    {
+      $addFields: {
+        monthIndices: { $range: [0, "$monthsElapsed"] },
+      },
+    },
+
+    {
+      $addFields: {
+        allMonths: {
+          $map: {
+            input: "$monthIndices",
+            as: "i",
+            in: {
+              yearMonth: {
+                $dateToString: {
+                  format: "%Y-%m",
+                  date: {
+                    $dateAdd: {
+                      startDate: "$allottedAt",
+                      unit: "month",
+                      amount: "$$i",
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+
+    { $unwind: "$allMonths" },
+
+    {
+      $lookup: {
+        from: "payments",
+        let: {
+          aptId: "$_id",
+          ym: "$allMonths.yearMonth",
+        },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$apartmentId", "$$aptId"] },
+                  { $eq: ["$monthOf", "$$ym"] },
+                ],
+              },
+            },
+          },
+          { $limit: 1 },
+        ],
+        as: "paymentDoc",
+      },
+    },
+
+    {
+      $project: {
+        _id: 0,
+        month: "$allMonths.yearMonth",
+        paid: { $gt: [{ $size: "$paymentDoc" }, 0] },
+      },
+    },
+
+    { $sort: { month: 1 } },
+  ];
+
+  const result = await Apartment.aggregate(pipeline);
+
+  return result.filter((m) => !m.paid).map((m) => m.month);
+}
+
+export async function GetUserAllottedApartment(userId: string) {
+  await dbConnect();
+  try {
+    const user = await User.findById(userId).populate({
+      path: "userAllottedTo",
+      model: Apartment,
+    });
+    if (!user) {
+      throw new NotFoundError("User");
+    }
+    return {
+      success: true,
+      data: { apartment: JSON.parse(JSON.stringify(user.userAllottedTo)) },
+    };
+  } catch (error) {
+    console.error("Error fetching user allotted apartment:", error);
+    return {
+      success: false,
+    };
+  }
+}
+
+export async function CreatePayment(
+  apartmentId: string,
+  userId: string,
+  formData: {
+    amount: number;
+    paymentMethod: string;
+    transactionId: string;
+    month: string; // Format: "YYYY-MM"
+  }
+) {
+  await dbConnect();
+
+  try {
+    const newPayment = await Payment.create({
+      apartmentId: new Types.ObjectId(apartmentId),
+      userId: new Types.ObjectId(userId),
+      amount: formData.amount,
+      paymentMethod: formData.paymentMethod,
+      transactionId: formData.transactionId,
+      monthOf: formData.month, // Assuming you updated schema
+      status: "pending", // or "confirmed" based on logic
+    });
+
+    return { success: true, payment: JSON.parse(JSON.stringify(newPayment)) };
+  } catch (error) {
+    console.error("Payment creation error:", error);
+    return { success: false, error: "Something went wrong" };
+  }
+}
+
+export async function GetUserPayments(userId: string) {
+  await dbConnect();
+  try {
+    const payments = await Payment.find({ userId })
+      .populate({ path: "apartmentId", model: Apartment })
+      .populate({ path: "userId", model: User })
+      .sort({ paidAt: -1 });
+
+    return {
+      success: true,
+      data: { payments: JSON.parse(JSON.stringify(payments)) },
+    };
+  } catch (error) {
+    console.error("Error fetching user payments:", error);
     return {
       success: false,
     };

@@ -1,12 +1,13 @@
 import { auth } from "@/auth";
+import AllotmentInfo from "@/components/allotment-info";
 import { ApartmentDetails } from "@/components/apartment-card";
-import { Separator } from "@/components/ui/separator";
 import { GetApartment } from "@/lib/actions";
 
 type Params = Promise<{ id: string }>;
 async function page({ params }: { params: Params }) {
   const { id } = await params;
   const apartment = await GetApartment(id);
+  console.log(apartment.data?.apartment);
 
   if (!apartment.success) {
     return (
@@ -27,15 +28,20 @@ async function page({ params }: { params: Params }) {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="grid grid-cols-1 lg:grid-cols-2 h-full gap-4 p-4">
       {apartment.data?.apartment && (
-        <ApartmentDetails apartment={apartment.data?.apartment} />
+        <ApartmentDetails apartment={apartment.data.apartment} />
       )}
-      <Separator orientation="horizontal" className="my-12" />
-      {apartment.data?.apartment.allotedTo ? (
-        <p>Alloted to {apartment.data?.apartment.allotedTo.userId}</p>
+
+      {apartment.data?.apartment.allottedTo ? (
+        <AllotmentInfo
+          allottedTo={apartment.data.apartment.allottedTo.userId}
+          apartmentId={apartment.data.apartment._id}
+        />
       ) : (
-        <p>Not alotted to anyone yet</p>
+        <div className="border p-4 rounded-xl text-center">
+          <p className="text-muted-foreground">Not allotted to anyone yet</p>
+        </div>
       )}
     </div>
   );

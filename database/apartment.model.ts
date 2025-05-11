@@ -5,7 +5,7 @@ export interface IApartment {
   allottedTo: {
     userId: Types.ObjectId;
     allottedAt: Date;
-    // paymentHistory:
+    paymentHistory: Types.ObjectId[];
   } | null;
 
   address: {
@@ -36,6 +36,10 @@ const ApartmentSchema = new Schema<IApartment>(
       type: {
         userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
         allottedAt: { type: Date, default: Date.now },
+        paymentHistory: {
+          type: [{ type: Schema.Types.ObjectId, ref: "Payment" }],
+          default: [],
+        },
       },
       default: null,
     },

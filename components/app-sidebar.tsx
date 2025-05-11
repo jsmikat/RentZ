@@ -3,6 +3,7 @@ import * as React from "react";
 
 import { AlignVerticalJustifyEnd } from "lucide-react";
 
+import { auth } from "@/auth";
 import {
   Sidebar,
   SidebarContent,
@@ -15,6 +16,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { getNavMain } from "@/lib/nav-data";
 
 import SignoutButton from "./signout-button";
 
@@ -39,7 +41,14 @@ const data = {
   ],
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export async function AppSidebar({
+  ...props
+}: React.ComponentProps<typeof Sidebar>) {
+  const session = await auth();
+  const role = session?.user.role;
+  const data = {
+    navMain: getNavMain(role || "user"),
+  };
   return (
     <Sidebar className="p-4" {...props}>
       <SidebarHeader className="flex flex-row">

@@ -18,7 +18,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const { email, password } = validatedFields.data;
 
-        dbConnect();
+        await dbConnect();
 
         const existingUser = await User.findOne({ email });
         if (!existingUser) {
