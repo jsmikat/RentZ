@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { SelectValue } from "@radix-ui/react-select";
 import { getSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,10 @@ export default function RegisterForm() {
 
   async function onSubmit(values: z.infer<typeof SignupFormSchema>) {
     const submitted = await SignUp(values);
+    if (!submitted.success) {
+      toast.error(submitted.error);
+      return;
+    }
     if (submitted.success) {
       getSession();
       router.push("/");

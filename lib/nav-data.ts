@@ -6,6 +6,10 @@ export function getNavMain(role: "owner" | "user") {
         url: "#",
         items: [
           {
+            title: "Dashboard",
+            url: "/dashboard/owner",
+          },
+          {
             title: "Add Apartment",
             url: "/dashboard/owner/apartment/create",
           },
@@ -16,6 +20,10 @@ export function getNavMain(role: "owner" | "user") {
           {
             title: "Payment Requests",
             url: "/dashboard/owner/apartment/payments",
+          },
+          {
+            title: "Rules & Regulations",
+            url: "/dashboard/owner/rules",
           },
         ],
       },
@@ -29,6 +37,10 @@ export function getNavMain(role: "owner" | "user") {
         url: "#",
         items: [
           {
+            title: "Dashboard",
+            url: "/dashboard/user",
+          },
+          {
             title: "My Requests",
             url: "/dashboard/user/requests",
           },
@@ -39,6 +51,10 @@ export function getNavMain(role: "owner" | "user") {
           {
             title: "Leave Request",
             url: "/dashboard/user/leave",
+          },
+          {
+            title: "Rules & Regulations",
+            url: "/dashboard/user/rules",
           },
         ],
       },

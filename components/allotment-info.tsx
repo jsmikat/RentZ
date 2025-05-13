@@ -83,9 +83,9 @@ export default function AllotmentInfo({ allottedTo, apartmentId }: any) {
         </div>
       </div>
       {leaveRequest && (
-        <div>
+        <div className="bg-rose-50 text-rose-700 p-4 text-2xl">
           <p>
-            Apartment leaving request from:{" "}
+            Leave request from:{" "}
             <Badge>{dayjs(leaveRequest.from).format("MMMM YYYY")}</Badge>
           </p>
         </div>

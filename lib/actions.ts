@@ -16,7 +16,7 @@ import {
   SignupFormSchema,
 } from "@/lib/validations";
 
-import { NotFoundError, UnauthorizedError } from "./http-errors";
+import { ConflictError, NotFoundError, UnauthorizedError } from "./http-errors";
 import dbConnect from "./mongoose";
 
 type SignUpParams = z.infer<typeof SignupFormSchema>;
@@ -37,7 +37,7 @@ export async function SignUp(params: SignUpParams) {
   try {
     const existingUser = await User.findOne({ email }).session(session);
     if (existingUser) {
-      throw new Error("User already exists");
+      throw new ConflictError("User already exists");
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
@@ -68,9 +68,14 @@ export async function SignUp(params: SignUpParams) {
     return {
       success: true,
     };
-  } catch (error) {
+  } catch (error: Error | any) {
     // await session.abortTransaction();
-    console.error("Error during sign up:", error);
+    if (error.name === "ConflictError") {
+      return {
+        success: false,
+        error: "User already exists",
+      };
+    }
     return {
       success: false,
       error: "Sign up failed",
@@ -929,5 +934,40 @@ export async function GetLeaveRequest(apartmentId: string) {
     return {
       success: false,
     };
+  }
+}
+
+export async function hasSentLeaveRequest(apartmentId: string, userId: string) {
+  await dbConnect();
+  try {
+    const leaveRequest = await LeaveRequest.findOne({
+      apartmentId,
+      requesterId: userId,
+    });
+
+    return {
+      success: true,
+      data: { hasSentLeaveRequest: !!leaveRequest },
+    };
+  } catch (error) {
+    console.error("Error fetching leave requests:", error);
+    return {
+      success: false,
+    };
+  }
+}
+
+export async function isAllotedToApartment(userId: string) {
+  await dbConnect();
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new NotFoundError("User");
+    }
+    const res = user.userAllottedTo !== null;
+    return res;
+  } catch (error) {
+    console.error("Error fetching user allotted apartment:", error);
+    return false;
   }
 }

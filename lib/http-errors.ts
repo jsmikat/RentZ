@@ -46,6 +46,13 @@ export class NotFoundError extends RequestError {
   }
 }
 
+export class ConflictError extends RequestError {
+  constructor(message: string = "Conflict") {
+    super(409, message);
+    this.name = "ConflictError";
+  }
+}
+
 export class ForbiddenError extends RequestError {
   constructor(message: string = "Forbidden") {
     super(403, message);
