@@ -12,17 +12,15 @@ export default async function page() {
   const dueMonths = await GetUnpaidMonths(
     payments.data?.payments[0].apartmentId._id
   );
-  if (!session) {
-    return (
-      <p className="text-destructive text-center text-xl mt-20">
-        No data found.
-      </p>
-    );
-  }
+
   return (
-    <div className="flex flex-col gap-4 p-4">
-      <DueMonthsList dueMonths={dueMonths} />
-      <PaymentsTable payments={payments.data?.payments} />
+    <div className="flex flex-col gap-8 p-4">
+      <div className="border-2 p-4 rounded">
+        <DueMonthsList dueMonths={dueMonths} />
+      </div>
+      {payments.data?.payments[0].apartmentId && (
+        <PaymentsTable payments={payments.data?.payments} />
+      )}
     </div>
   );
 }
@@ -30,7 +28,7 @@ export default async function page() {
 export function DueMonthsList({ dueMonths }: { dueMonths: string[] }) {
   return (
     <div>
-      <p className="font-medium">Due Months:</p>
+      <p className="font-bold text-xl">Due Months:</p>
       <div className="flex flex-wrap gap-2 mt-2">
         {dueMonths.length > 0 ? (
           dueMonths.map((month) => (

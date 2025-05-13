@@ -36,6 +36,10 @@ export function getNavMain(role: "owner" | "user") {
             title: "Submit Payment",
             url: "/dashboard/user/payment",
           },
+          {
+            title: "Leave Request",
+            url: "/dashboard/user/leave",
+          },
         ],
       },
     ];

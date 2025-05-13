@@ -73,7 +73,7 @@ export default async function HeroSection(props: {
 
       {/* Main Section */}
       <main className="overflow-hidden">
-        <section className="relative">
+        <section className="relative bg-img">
           <div className="relative pt-24 pb-12 lg:pt-20">
             <div className="mx-auto space-y-6 max-w-7xl px-6 md:px-12">
               <div className="text-center sm:mx-auto sm:w-10/12 lg:mr-auto lg:mt-0 lg:w-4/5">

@@ -29,6 +29,7 @@ export function ApartmentRow({
 }) {
   const router = useRouter();
   const { data: session } = useSession();
+  const isAllotted = apartment.allottedTo !== null;
   return (
     <TableRow className="cursor-pointer" onClick={handleClick}>
       <TableCell className="font-medium">{`${apartment.address.street}, ${apartment.address.area}, ${apartment.address.city}`}</TableCell>
@@ -73,33 +74,37 @@ export function ApartmentRow({
             <DropdownMenuContent align="end">
               <DropdownMenuItem>
                 <Button
-                  variant="outline"
-                  className="w-[8rem]"
-                  onClick={(e) =>
+                  onClick={(e) => {
+                    e.stopPropagation();
                     router.push(
                       new URL(
                         `/dashboard/owner/apartment/edit/${apartment._id}`,
                         window.location.origin
                       ).toString()
-                    )
-                  }
+                    );
+                  }}
+                  variant="outline"
+                  className="w-[8rem]"
                 >
                   Edit
                 </Button>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Button
-                  className="w-[8rem]"
-                  variant="destructive"
-                  onClick={async (e) => {
-                    e.preventDefault();
-                    await DeleteApartment(apartment._id as string);
-                    router.refresh();
-                  }}
-                >
-                  Delete
-                </Button>
-              </DropdownMenuItem>
+              {!isAllotted && (
+                <DropdownMenuItem>
+                  <Button
+                    className="w-[8rem]"
+                    variant="destructive"
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      await DeleteApartment(apartment._id as string);
+                      router.refresh();
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}

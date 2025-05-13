@@ -20,6 +20,7 @@ export function PaymentsTable({ payments }: { payments: any[] }) {
           <TableHead>Amount</TableHead>
           <TableHead>Paid Month</TableHead>
           <TableHead>Status</TableHead>
+          <TableHead>Action</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

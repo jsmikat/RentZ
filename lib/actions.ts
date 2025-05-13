@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { auth, signIn } from "@/auth";
 import Apartment from "@/database/apartment.model";
+import LeaveRequest from "@/database/leavingRequest.model";
 import Payment from "@/database/payment.model";
 import Request from "@/database/request.model";
 import User from "@/database/user.model";
@@ -585,7 +586,16 @@ export async function GetUnpaidMonths(apartmentId: string) {
     {
       $project: {
         allottedAt: "$allottedTo.allottedAt",
+        paymentIds: "$allottedTo.paymentHistory",
         now: "$$NOW",
+      },
+    },
+    {
+      $lookup: {
+        from: "payments",
+        localField: "paymentIds",
+        foreignField: "_id",
+        as: "payments",
       },
     },
 
@@ -619,64 +629,51 @@ export async function GetUnpaidMonths(apartmentId: string) {
             input: "$monthIndices",
             as: "i",
             in: {
-              yearMonth: {
-                $dateToString: {
-                  format: "%Y-%m",
-                  date: {
-                    $dateAdd: {
-                      startDate: "$allottedAt",
-                      unit: "month",
-                      amount: "$$i",
-                    },
+              $dateToString: {
+                format: "%Y-%m",
+                date: {
+                  $dateAdd: {
+                    startDate: "$allottedAt",
+                    unit: "month",
+                    amount: "$$i",
                   },
                 },
               },
             },
           },
         },
+        paidMonths: {
+          $map: {
+            input: "$payments",
+            as: "p",
+            in: "$$p.monthOf",
+          },
+        },
       },
     },
 
-    { $unwind: "$allMonths" },
-
     {
-      $lookup: {
-        from: "payments",
-        let: {
-          aptId: "$_id",
-          ym: "$allMonths.yearMonth",
-        },
-        pipeline: [
-          {
-            $match: {
-              $expr: {
-                $and: [
-                  { $eq: ["$apartmentId", "$$aptId"] },
-                  { $eq: ["$monthOf", "$$ym"] },
-                ],
-              },
-            },
+      $addFields: {
+        unpaidMonths: {
+          $filter: {
+            input: "$allMonths",
+            as: "month",
+            cond: { $not: { $in: ["$$month", "$paidMonths"] } },
           },
-          { $limit: 1 },
-        ],
-        as: "paymentDoc",
+        },
       },
     },
 
     {
       $project: {
         _id: 0,
-        month: "$allMonths.yearMonth",
-        paid: { $gt: [{ $size: "$paymentDoc" }, 0] },
+        unpaidMonths: 1,
       },
     },
-
-    { $sort: { month: 1 } },
   ];
 
   const result = await Apartment.aggregate(pipeline);
-
-  return result.filter((m) => !m.paid).map((m) => m.month);
+  return result[0]?.unpaidMonths || [];
 }
 
 export async function GetUserAllottedApartment(userId: string) {
@@ -708,20 +705,20 @@ export async function CreatePayment(
     amount: number;
     paymentMethod: string;
     transactionId: string;
-    month: string; // Format: "YYYY-MM"
+    month: string;
   }
 ) {
   await dbConnect();
 
   try {
     const newPayment = await Payment.create({
-      apartmentId: new Types.ObjectId(apartmentId),
-      userId: new Types.ObjectId(userId),
+      apartmentId,
+      userId,
       amount: formData.amount,
       paymentMethod: formData.paymentMethod,
       transactionId: formData.transactionId,
-      monthOf: formData.month, // Assuming you updated schema
-      status: "pending", // or "confirmed" based on logic
+      monthOf: formData.month,
+      status: "pending",
     });
 
     return { success: true, payment: JSON.parse(JSON.stringify(newPayment)) };
@@ -745,6 +742,190 @@ export async function GetUserPayments(userId: string) {
     };
   } catch (error) {
     console.error("Error fetching user payments:", error);
+    return {
+      success: false,
+    };
+  }
+}
+
+export async function GetOwnerPaymentRequests(ownerId: string) {
+  await dbConnect();
+  try {
+    const paymentsByOwner = await Payment.aggregate([
+      {
+        $lookup: {
+          from: "apartments",
+          localField: "apartmentId",
+          foreignField: "_id",
+          as: "apartment",
+        },
+      },
+      { $unwind: "$apartment" },
+      {
+        $match: {
+          "apartment.owner": new Types.ObjectId(ownerId),
+          status: "pending",
+        },
+      },
+      {
+        $project: {
+          userId: 1,
+          apartmentId: 1,
+          amount: 1,
+          paidAt: 1,
+          monthOf: 1,
+          status: 1,
+          transactionId: 1,
+          paymentMethod: 1,
+        },
+      },
+    ]);
+    return {
+      success: true,
+      data: { payments: JSON.parse(JSON.stringify(paymentsByOwner)) },
+    };
+  } catch (error) {
+    console.error("Error fetching owner payment requests:", error);
+    return {
+      success: false,
+    };
+  }
+}
+
+export async function PaymentConfirmation(
+  paymentId: string,
+  status: "confirmed" | "declined"
+) {
+  await dbConnect();
+  try {
+    const payment = await Payment.findByIdAndUpdate(
+      paymentId,
+      { status },
+      { new: true }
+    );
+
+    if (!payment) {
+      throw new NotFoundError("Payment");
+    }
+
+    if (status === "confirmed") {
+      await Apartment.updateOne(
+        { _id: payment.apartmentId },
+        {
+          $push: {
+            "allottedTo.paymentHistory": payment._id,
+          },
+        }
+      );
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error confirming payment:", error);
+    return { success: false };
+  }
+}
+
+export async function GetPaymentMemoData(paymentId: string) {
+  await dbConnect();
+
+  const payment = await Payment.findOne({ _id: paymentId, status: "confirmed" })
+    .populate({
+      path: "apartmentId",
+      populate: {
+        path: "owner",
+        model: "User",
+      },
+    })
+    .populate("userId");
+
+  if (!payment) return null;
+
+  return {
+    user: {
+      name: payment.userId.name,
+      phoneNumber: payment.userId.phoneNumber,
+    },
+    apartment: {
+      address: payment.apartmentId.address,
+      rentalPrice: payment.apartmentId.rentalPrice,
+    },
+    owner: {
+      name: payment.apartmentId.owner.name,
+      phoneNumber: payment.apartmentId.owner.phoneNumber,
+    },
+    payment: {
+      amount: payment.amount,
+      method: payment.paymentMethod,
+      transactionId: payment.transactionId,
+      paidAt: payment.paidAt,
+      monthOf: payment.monthOf,
+      confirmedAt: payment.updatedAt,
+    },
+  };
+}
+
+export async function SubmitLeaveRequest(
+  apartmentId: string,
+  month: string,
+  additionalInfo: string
+) {
+  await dbConnect();
+
+  const session = await auth();
+  if (!session) throw new Error("Unauthorized");
+
+  const apartment = await Apartment.findById(apartmentId).populate("owner");
+  if (!apartment) throw new Error("Apartment not found");
+
+  await LeaveRequest.create({
+    requesterId: session?.user.id,
+    apartmentId,
+    ownerId: apartment.owner._id,
+    from: month,
+    additionalInfo,
+  });
+
+  return { success: true };
+}
+
+export async function GetApartmentId(userId: string) {
+  await dbConnect();
+  try {
+    const user = await User.findById(userId).populate({
+      path: "userAllottedTo",
+      model: Apartment,
+    });
+    if (!user) {
+      throw new NotFoundError("User");
+    }
+    return {
+      success: true,
+      data: {
+        apartmentId: JSON.parse(JSON.stringify(user.userAllottedTo._id)),
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching user allotted apartment:", error);
+    return {
+      success: false,
+    };
+  }
+}
+
+export async function GetLeaveRequest(apartmentId: string) {
+  await dbConnect();
+  try {
+    const leaveRequest = await LeaveRequest.find({
+      apartmentId,
+    });
+
+    return {
+      success: true,
+      data: { leaveRequest: JSON.parse(JSON.stringify(leaveRequest[0])) },
+    };
+  } catch (error) {
+    console.error("Error fetching leave requests:", error);
     return {
       success: false,
     };

@@ -7,7 +7,7 @@ type Params = Promise<{ id: string }>;
 async function page({ params }: { params: Params }) {
   const { id } = await params;
   const apartment = await GetApartment(id);
-  console.log(apartment.data?.apartment);
+  console.log(apartment);
 
   if (!apartment.success) {
     return (

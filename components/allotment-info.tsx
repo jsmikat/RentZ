@@ -5,11 +5,12 @@ import { useEffect, useState } from "react";
 import dayjs from "dayjs";
 
 import { Badge } from "@/components/ui/badge";
-import { GetUnpaidMonths } from "@/lib/actions";
+import { GetLeaveRequest, GetUnpaidMonths } from "@/lib/actions";
 
 export default function AllotmentInfo({ allottedTo, apartmentId }: any) {
   const [dueMonths, setDueMonths] = useState<string[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [leaveRequest, setLeaveRequest] = useState<any>(null);
 
   useEffect(() => {
     async function fetchDueMonths() {
@@ -28,8 +29,23 @@ export default function AllotmentInfo({ allottedTo, apartmentId }: any) {
       }
     }
 
+    async function fetchLeaveRequest() {
+      try {
+        const res = await GetLeaveRequest(apartmentId);
+        if (res) {
+          setLeaveRequest(res.data?.leaveRequest);
+        } else {
+          setLeaveRequest(null);
+        }
+      } catch (err) {
+        console.error("Failed to fetch leave request", err);
+        setLeaveRequest(null);
+      }
+    }
+
     if (allottedTo && apartmentId) {
       fetchDueMonths();
+      fetchLeaveRequest();
     }
   }, [allottedTo, apartmentId]);
 
@@ -66,6 +82,14 @@ export default function AllotmentInfo({ allottedTo, apartmentId }: any) {
           )}
         </div>
       </div>
+      {leaveRequest && (
+        <div>
+          <p>
+            Apartment leaving request from:{" "}
+            <Badge>{dayjs(leaveRequest.from).format("MMMM YYYY")}</Badge>
+          </p>
+        </div>
+      )}
     </div>
   );
 }
